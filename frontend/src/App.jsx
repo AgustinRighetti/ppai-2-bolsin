@@ -4,6 +4,25 @@ import { api } from './api.js'
 const PASOS = ['Bolsín', 'Contenido y situación', 'Confirmación', 'Resultado']
 const ESTADO_PREVIO_DOCUMENTACION = 'En bolsín enviado'
 
+// Qué se marca en el listado según la opción de recepción elegida (palabras de la ERS)
+const MARCADO_POR_OPCION = {
+  2: {
+    instruccion: 'Marcá la documentación que falta: figura en el remito pero no llegó en el bolsín.',
+    resumen: 'Faltante',
+    confirmacion: 'Documentación que no se recibió',
+  },
+  3: {
+    instruccion: 'Marcá la documentación que llegó pero no corresponde a esta comisión médica.',
+    resumen: 'No corresponde',
+    confirmacion: 'Documentación que no corresponde al destino',
+  },
+  4: {
+    instruccion: 'Marcá la documentación que se debe redirigir a otra área.',
+    resumen: 'A redirigir',
+    confirmacion: 'Documentación a redirigir',
+  },
+}
+
 export default function App() {
   const [usuarios, setUsuarios] = useState([])
   const [vista, setVista] = useState('inicio') // inicio | listado | detalle | resultado
@@ -160,6 +179,7 @@ export default function App() {
   const pasoActual = vista === 'listado' ? 0 : vista === 'detalle' ? (pedido ? 2 : 1) : vista === 'resultado' ? 3 : -1
   const faltaDocumentacion = opcion?.requiereSeleccionDocumentacion && docsMarcadas.length === 0
   const faltaArea = opcion?.requiereAreaDestino && area.trim() === ''
+  const marcado = MARCADO_POR_OPCION[opcion?.codigo]
   const totalDocumentacion = detalle?.remitos.reduce((total, r) => total + r.documentacion.length, 0) ?? 0
 
   return (
@@ -401,14 +421,14 @@ export default function App() {
                     <dd>{totalDocumentacion}</dd>
                   </div>
                   <div>
-                    <dt>Con novedad</dt>
+                    <dt>{marcado?.resumen ?? 'Marcadas'}</dt>
                     <dd className={docsMarcadas.length ? 'resaltado' : ''}>{docsMarcadas.length}</dd>
                   </div>
                 </dl>
 
                 <p className="ayuda">
                   Compará el contenido físico del bolsín con lo registrado.
-                  {opcion?.requiereSeleccionDocumentacion && <strong> Marcá la documentación que presenta la novedad.</strong>}
+                  {marcado && <strong> {marcado.instruccion}</strong>}
                 </p>
 
                 {detalle.remitos.map((remito) => (
@@ -476,7 +496,7 @@ export default function App() {
                 {opcion?.requiereSeleccionDocumentacion && (
                   <p className={`indicador ${docsMarcadas.length ? 'listo' : ''}`}>
                     {docsMarcadas.length === 0
-                      ? 'Marcá en el listado la documentación correspondiente.'
+                      ? marcado?.instruccion ?? 'Marcá en el listado la documentación correspondiente.'
                       : `${docsMarcadas.length} documentación(es) marcada(s).`}
                   </p>
                 )}
@@ -582,7 +602,7 @@ export default function App() {
               <dd>{pedido.descripcion}</dd>
               {pedido.numerosDocumentacion.length > 0 && (
                 <>
-                  <dt>Documentación con novedad</dt>
+                  <dt>{MARCADO_POR_OPCION[pedido.opcion]?.confirmacion ?? 'Documentación indicada'}</dt>
                   <dd className="mono">{pedido.numerosDocumentacion.map((n) => `N° ${n}`).join(', ')}</dd>
                 </>
               )}
