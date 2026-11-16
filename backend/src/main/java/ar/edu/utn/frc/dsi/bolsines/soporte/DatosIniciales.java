@@ -97,15 +97,6 @@ public class DatosIniciales implements CommandLineRunner {
         estado(Estado.AMBITO_REMITO, Estado.EN_BOLSIN_ENVIADO, "En bolsín enviado");
         estado(Estado.AMBITO_REMITO, Estado.RECIBIDO_Y_ACEPTADO, "Recibido y aceptado");
         estado(Estado.AMBITO_REMITO, Estado.RECIBIDO_Y_ACEPTADO_PARCIAL, "Recibido y aceptado parcial");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.REGISTRADA, "Registrada");
-        estado(Estado.AMBITO_DOCUMENTACION, "EnRemito", "En remito");
-        estado(Estado.AMBITO_DOCUMENTACION, "EnBolsinSaliente", "En bolsín saliente");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.EN_BOLSIN_ENVIADO, "En bolsín enviado");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.RECIBIDO_Y_ACEPTADO, "Recibida y aceptada");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.NO_RECIBIDA, "No recibida");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.RECIBIDO_Y_RECHAZADO, "Recibida y rechazada");
-        estado(Estado.AMBITO_DOCUMENTACION, Estado.PARA_REDIRIGIR, "Para redirigir");
-        estado(Estado.AMBITO_DOCUMENTACION, "DeBaja", "De baja");
 
         // Comisiones médicas
         ComisionMedica central = comisiones.save(new ComisionMedica("CMC", "Comisión Médica Central",
@@ -207,13 +198,19 @@ public class DatosIniciales implements CommandLineRunner {
         return remito;
     }
 
+    /**
+     * Crea la documentación y la lleva hasta el estado del remito usando las transiciones del
+     * patrón State: Registrada -> En remito -> En bolsín saliente -> En bolsín enviado.
+     */
     private void doc(Remito remito, String asunto, TipoDocumento tipo, Empleado responsable) {
         LocalDateTime registrada = LocalDateTime.now().minusDays(5).withNano(0);
         Documentacion documentacion = new Documentacion(++numeroDocumentacion, asunto, LocalDate.now().minusDays(5),
-                tipo, remito.getOrigen());
-        documentacion.actualizarEstado(estado(Estado.AMBITO_DOCUMENTACION, Estado.REGISTRADA), responsable, registrada);
-        documentacion.actualizarEstado(estado(Estado.AMBITO_DOCUMENTACION, remito.getNombreEstado()), responsable,
-                registrada.plusDays(1));
+                tipo, remito.getOrigen(), responsable, registrada);
+        documentacion.asignarARemito(responsable, registrada.plusHours(2));
+        documentacion.agregarABolsin(responsable, registrada.plusDays(1));
+        if (Estado.EN_BOLSIN_ENVIADO.equals(remito.getNombreEstado())) {
+            documentacion.registrarRetiro(responsable, registrada.plusDays(2));
+        }
         remito.agregarDocumentacion(documentaciones.save(documentacion));
     }
 }

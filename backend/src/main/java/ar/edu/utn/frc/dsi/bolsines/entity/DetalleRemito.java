@@ -30,12 +30,26 @@ public class DetalleRemito {
         return documentacion.esTuNumero(numeroDocumentacion);
     }
 
-    public void actualizarEstadoDocumentacion(Estado estado, Empleado responsable, LocalDateTime fechaHora) {
-        documentacion.actualizarEstado(estado, responsable, fechaHora);
+    public void aceptarDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
+        documentacion.aceptar(responsable, fechaHora);
     }
 
-    public void setAreaCMCDestino(String areaCMCDestino) {
+    public void noRecibirDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
+        documentacion.noRecibir(responsable, fechaHora);
+    }
+
+    public void rechazarDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
+        documentacion.rechazar(responsable, fechaHora);
+    }
+
+    public void redirigirDocumentacion(String areaCMCDestino, Empleado responsable, LocalDateTime fechaHora) {
+        documentacion.redirigir(responsable, fechaHora);
         this.areaCMCDestino = areaCMCDestino;
+    }
+
+    /** Verdadero si la documentación quedó No recibida o Recibida y rechazada. */
+    public boolean esDocumentacionFaltanteORechazada() {
+        return documentacion.esNoRecibida() || documentacion.esRecibidaYRechazada();
     }
 
     public String getAreaCMCDestino() {

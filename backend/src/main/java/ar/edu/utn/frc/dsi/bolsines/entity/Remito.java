@@ -49,36 +49,37 @@ public class Remito {
         detalleRemito.add(new DetalleRemito(documentacion));
     }
 
-    /** Verdadero si alguna de las documentaciones indicadas está incluida en este remito. */
-    public boolean contieneAlgunaDocumentacion(List<Integer> numerosDocumentacion) {
-        return detalleRemito.stream()
-                .anyMatch(detalle -> numerosDocumentacion.stream().anyMatch(detalle::esDeDocumentacion));
-    }
-
     public boolean contieneDocumentacion(Integer numeroDocumentacion) {
         return detalleRemito.stream().anyMatch(detalle -> detalle.esDeDocumentacion(numeroDocumentacion));
     }
 
     /**
-     * Registra la recepción del remito: toma el nuevo estado del remito y actualiza cada
-     * documentación. Las documentaciones con novedad (no recibidas, rechazadas o a redirigir)
-     * pasan a estadoDocConNovedad; el resto pasa a estadoDocAceptada.
+     * Registra la recepción del remito: a cada documentación le envía el evento que corresponde
+     * según la situación informada por el EB. Qué estado resulta lo resuelve el patrón State.
+     * Luego el remito queda Recibido y Aceptado o, si alguna documentación quedó no recibida o
+     * rechazada, Recibido y Aceptado Parcial.
      */
-    public void recibir(Estado estadoRemito, Estado estadoDocAceptada, List<Integer> numerosDocConNovedad,
-                        Estado estadoDocConNovedad, String areaCMCDestino, Empleado responsable,
-                        LocalDateTime fechaHora) {
-        setEstado(estadoRemito);
+    public void registrarRecepcion(SituacionRecepcion situacion, List<Integer> numerosDocConNovedad,
+                                   String areaCMCDestino, Estado estadoAceptado, Estado estadoAceptadoParcial,
+                                   Empleado responsable, LocalDateTime fechaHora) {
         for (DetalleRemito detalle : detalleRemito) {
             boolean conNovedad = numerosDocConNovedad.stream().anyMatch(detalle::esDeDocumentacion);
-            if (conNovedad) {
-                detalle.actualizarEstadoDocumentacion(estadoDocConNovedad, responsable, fechaHora);
-                if (areaCMCDestino != null) {
-                    detalle.setAreaCMCDestino(areaCMCDestino);
-                }
-            } else {
-                detalle.actualizarEstadoDocumentacion(estadoDocAceptada, responsable, fechaHora);
+            if (!conNovedad) {
+                detalle.aceptarDocumentacion(responsable, fechaHora);
+                continue;
+            }
+            switch (situacion) {
+                case NO_SE_RECIBE_TODA -> detalle.noRecibirDocumentacion(responsable, fechaHora);
+                case NO_CORRESPONDE_AL_DESTINO -> detalle.rechazarDocumentacion(responsable, fechaHora);
+                case REDIRIGIR_A_OTRA_AREA -> detalle.redirigirDocumentacion(areaCMCDestino, responsable, fechaHora);
+                default -> detalle.aceptarDocumentacion(responsable, fechaHora);
             }
         }
+        setEstado(tenesDocumentacionFaltanteORechazada() ? estadoAceptadoParcial : estadoAceptado);
+    }
+
+    private boolean tenesDocumentacionFaltanteORechazada() {
+        return detalleRemito.stream().anyMatch(DetalleRemito::esDocumentacionFaltanteORechazada);
     }
 
     public void setEstado(Estado estado) {

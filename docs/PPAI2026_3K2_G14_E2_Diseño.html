@@ -47,7 +47,7 @@
   @media print {
     @page apaisada { size: A4 landscape; margin: 10mm; }
     .apaisada .diagrama { border: 0; padding: 0; }
-    .apaisada .diagrama img { max-width: 100%; max-height: 132mm; width: auto; height: auto; }
+    .apaisada .diagrama img { max-width: 100%; max-height: 125mm; width: auto; height: auto; }
     .apaisada h2 { margin-top: 0; }
     .apaisada .titulo-modelo { margin-bottom: 0; }
     h1 { margin: 2mm 0 1mm; font-size: 19pt; }
@@ -81,7 +81,7 @@
   <h1>Proyecto Práctico de Aplicación Integrador</h1>
   <p class="sub">Entrega 2: Diseño</p>
   <p><strong>Caso de estudio:</strong> Bolsines</p>
-  <p><strong>Tema de la entrega:</strong> Rediseño de la realización del CU 28 Registrar recepción de bolsín con el patrón Strategy, implementación y diseño de las interfaces de usuario</p>
+  <p><strong>Tema de la entrega:</strong> Rediseño de la realización del CU 28 Registrar recepción de bolsín con el patrón State sobre la máquina de estados de Documentación, implementación y diseño de las interfaces de usuario</p>
   <br>
   <table>
     <tr><th>Universidad / Facultad</th><td>Universidad Tecnológica Nacional – Facultad Regional Córdoba</td></tr>
@@ -110,43 +110,83 @@
 
 <!-- ============================ 1. PATRÓN ============================ -->
 <h2 class="salto">1. Identificación del patrón implementado</h2>
-<p><strong>Patrón:</strong> Strategy (Gamma et al., patrón de comportamiento), acordado con la docente tutora.</p>
+<p><strong>Patrón:</strong> State (Gamma et al., patrón de comportamiento), acordado con la docente tutora.</p>
+<p>
+  Se aplica sobre la clase <code>Documentacion</code>, cuya máquina de estados es la asignada al grupo
+  (grupo par: CU 28 Registrar recepción de bolsín – Máquina de estados de Documentación).
+</p>
 
 <h3>1.1 Problema que se propone resolver</h3>
 <p>
-  En el paso 7 del CU 28 el Encargado de Bolsines indica en qué situación llegó el bolsín. Según la regla de negocio
-  <em>Recepción de un Bolsín en una CM Destino</em> existen cuatro situaciones y cada una actualiza los remitos y la
-  documentación de manera distinta:
+  Una documentación pasa por nueve estados (Registrada, En remito, En bolsín saliente, En bolsín enviado,
+  Recibida y aceptada, No recibida, Recibida y rechazada, Para redirigir y De baja) y lo que puede hacerse con ella
+  depende del estado en que se encuentra. En el CU 28, cuando el Encargado de Bolsines informa la situación del bolsín,
+  cada documentación debe pasar de <em>En bolsín enviado</em> a <em>Recibida y aceptada</em>, <em>No recibida</em>,
+  <em>Recibida y rechazada</em> o <em>Para redirigir</em>, y solo desde ese estado.
 </p>
-<table>
-  <tr><th>Opción de recepción</th><th>Remitos</th><th>Documentación</th></tr>
-  <tr><td>1. El contenido es igual al registrado</td><td>Recibido y Aceptado</td><td>Toda: Recibida y Aceptada</td></tr>
-  <tr><td>2. No se recibe toda la documentación</td><td>Recibido y Aceptado Parcial (los que tienen faltantes)</td><td>Faltante: No Recibida. Resto: Recibida y Aceptada</td></tr>
-  <tr><td>3. Documentación que no corresponde al destino</td><td>Recibido y Aceptado Parcial (los que tienen rechazos)</td><td>Indicada: Recibida y Rechazada. Resto: Recibida y Aceptada</td></tr>
-  <tr><td>4. Documentación para redirigir a otra área (solo CMC)</td><td>Recibido y Aceptado</td><td>Indicada: Para Redirigir (con área destino). Resto: Recibida y Aceptada</td></tr>
-</table>
 <p>
-  En la realización de análisis (Entrega 1) toda esa lógica quedaba en el método <code>actualizarEstados()</code> del
-  <code>GestorRecepcionBolsin</code>. Al incorporar los flujos alternativos A3, A4 y A5 ese método se convierte en una
-  estructura condicional que crece con cada situación nueva, mezcla cuatro algoritmos distintos en la clase de control y
-  obliga a modificar el gestor cada vez que cambia una regla de recepción.
+  En la realización de análisis (Entrega 1) el estado era un objeto <code>Estado</code> con ámbito y nombre, y cada
+  transición se resolvía preguntando por él (<code>esEnviado()</code>, <code>esRecibidoYAceptado()</code>…) y
+  buscando el estado destino entre todos los estados. Esa lógica queda repartida entre el gestor y las entidades,
+  se convierte en condicionales que crecen con cada estado y no impide transiciones inválidas, por ejemplo aceptar
+  una documentación que nunca fue enviada.
 </p>
 
 <h3>1.2 Justificación</h3>
 <ul>
-  <li><strong>Familia de algoritmos intercambiables:</strong> las cuatro opciones resuelven el mismo objetivo (dejar remitos y documentación en el estado que corresponde) con algoritmos diferentes, y la elección se hace en tiempo de ejecución, cuando el EB selecciona la opción.</li>
-  <li><strong>Elimina el condicional del gestor:</strong> el gestor (Context) conserva una referencia a <code>EstrategiaRecepcion</code> y delega con un único mensaje polimórfico <code>registrarRecepcion()</code>.</li>
-  <li><strong>Abierto a extensión:</strong> una nueva situación de recepción se agrega como una clase nueva, sin tocar el gestor ni las estrategias existentes.</li>
-  <li><strong>Cohesión y expertos:</strong> cada estrategia conoce solo su regla; las entidades siguen siendo las expertas en cambiar su propio estado (<code>Remito.recibir()</code>, <code>Documentacion.actualizarEstado()</code>).</li>
-  <li><strong>Lo que no varía queda en el contexto:</strong> el bolsín siempre pasa a <em>Recibido en CM destino</em>, por eso ese cambio lo sigue haciendo el gestor.</li>
+  <li><strong>El comportamiento depende del estado:</strong> el mismo mensaje (<code>aceptar()</code>, <code>rechazar()</code>…) es válido o no, y lleva a un estado u otro, según el estado actual. Es el caso de aplicación del patrón State.</li>
+  <li><strong>Elimina los condicionales:</strong> <code>Documentacion</code> (Context) delega cada evento en su estado actual con un único mensaje polimórfico; no pregunta en qué estado está.</li>
+  <li><strong>Transiciones explícitas y seguras:</strong> cada estado concreto redefine solo las transiciones que salen de él. Las demás heredan el comportamiento por defecto, que rechaza el evento. Así el código respeta exactamente la máquina de estados.</li>
+  <li><strong>Trazabilidad:</strong> en cada transición el estado concreto cierra el cambio de estado vigente y crea uno nuevo con el empleado responsable, como pide la regla de negocio <em>Trazabilidad de la documentación y del Bolsín</em>.</li>
+  <li><strong>Abierto a extensión:</strong> un estado nuevo es una clase nueva; no se modifica <code>Documentacion</code> ni el gestor.</li>
 </ul>
 <table>
   <tr><th>Rol del patrón</th><th>Clase del diseño</th></tr>
-  <tr><td>Context</td><td><code>GestorRecepcionBolsin</code></td></tr>
-  <tr><td>Strategy</td><td><code>EstrategiaRecepcion</code> (interfaz)</td></tr>
-  <tr><td>ConcreteStrategy</td><td><code>RecepcionCompleta</code>, <code>RecepcionParcial</code>, <code>RecepcionNoCorrespondeDestino</code>, <code>RecepcionParaRedirigir</code></td></tr>
-  <tr><td>Cliente</td><td><code>PantallaRegistrarRecepcion</code> (informa la opción elegida por el EB)</td></tr>
+  <tr><td>Context</td><td><code>Documentacion</code> (atributo <code>estadoActual</code>)</td></tr>
+  <tr><td>State</td><td><code>EstadoDocumentacion</code> (clase abstracta)</td></tr>
+  <tr><td>ConcreteState</td><td><code>Registrada</code>, <code>EnRemito</code>, <code>EnBolsinSaliente</code>, <code>EnBolsinEnviado</code>, <code>RecibidaYAceptada</code>, <code>NoRecibida</code>, <code>RecibidaYRechazada</code>, <code>ParaRedirigir</code>, <code>DeBaja</code></td></tr>
+  <tr><td>Cliente</td><td><code>DetalleRemito</code> (a pedido de <code>Remito</code> y del <code>GestorRecepcionBolsin</code>)</td></tr>
 </table>
+<p>
+  Bolsín y Remito conservan la clase <code>Estado</code> del modelo de dominio (ámbito y nombre), porque sus máquinas
+  de estados no se rediseñan en este caso de uso.
+</p>
+
+<section class="apaisada">
+<h3>1.3 Máquina de estados de Documentación</h3>
+<p>
+  Respecto de la Entrega 1 se agrega la transición <em>Recibida y rechazada → Registrada</em>: según la regla de
+  negocio, la documentación rechazada vuelve al origen para asociarse a un nuevo remito. En el diagrama se resaltan
+  las transiciones del CU 28.
+</p>
+<div class="diagrama">
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> Registrada : CU7 Registrar documentación / new()
+  Registrada --> EnRemito : CU15 Generar remito / asignarARemito()
+  EnRemito --> Registrada : CU17 Cancelar remito / cancelarRemito()
+  EnRemito --> EnBolsinSaliente : CU19 Generar bolsín / agregarABolsin()
+  EnBolsinSaliente --> EnRemito : CU20 Modificar o CU21 Eliminar bolsín / quitarDeBolsin()
+  EnBolsinSaliente --> EnBolsinEnviado : CU27 Registrar retiro / registrarRetiro()
+  EnBolsinEnviado --> RecibidaYAceptada : CU28 [contenido igual] / aceptar()
+  EnBolsinEnviado --> NoRecibida : CU28 [no se recibe] / noRecibir()
+  EnBolsinEnviado --> RecibidaYRechazada : CU28 [no corresponde] / rechazar()
+  EnBolsinEnviado --> ParaRedirigir : CU28 [redirigir a un área] / redirigir()
+  NoRecibida --> Registrada : CU29 / retomarRegistro()
+  NoRecibida --> DeBaja : CU31 / darDeBaja()
+  RecibidaYRechazada --> Registrada : CU31 / retomarRegistro()
+  ParaRedirigir --> RecibidaYAceptada : CU31 [es correcta] / aceptar()
+  ParaRedirigir --> RecibidaYRechazada : CU31 [no es correcta] / rechazar()
+  Registrada --> DeBaja : CU9 Eliminar documentación / darDeBaja()
+  RecibidaYAceptada --> [*]
+  DeBaja --> [*]
+  classDef cu28 fill:#dbe9fb,stroke:#1f5fae,stroke-width:2px
+  class EnBolsinEnviado,RecibidaYAceptada,NoRecibida,RecibidaYRechazada,ParaRedirigir cu28
+</pre>
+</div>
+<p class="titulo-modelo">Figura 1 – Máquina de estados de Documentación (resaltados: estados involucrados en el CU 28)</p>
+</section>
 
 <!-- ============================ 2. VISTA ESTÁTICA ============================ -->
 <section class="apaisada">
@@ -155,6 +195,129 @@
 <pre class="mermaid">
 classDiagram
   direction TB
+  class DetalleRemito {
+    &lt;&lt;entity&gt;&gt;
+    -areaCMCDestino: String
+    +aceptarDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibirDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazarDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigirDocumentacion(area: String, responsable: Empleado, fechaHora: LocalDateTime) void
+    +esDocumentacionFaltanteORechazada() boolean
+  }
+  class Documentacion {
+    &lt;&lt;Context&gt;&gt;
+    -numero: Integer
+    -asunto: String
+    -fechaPase: LocalDate
+    -estadoActual: EstadoDocumentacion
+    +asignarARemito(responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(responsable: Empleado, fechaHora: LocalDateTime) void
+    +esNoRecibida() boolean
+    +esRecibidaYRechazada() boolean
+    +obtenerCambioEstadoActual() CambioEstadoDocumentacion
+    +agregarCambioEstado(cambio: CambioEstadoDocumentacion) void
+    +setEstadoActual(estado: EstadoDocumentacion) void
+  }
+  class EstadoDocumentacion {
+    &lt;&lt;State&gt;&gt;
+    +getNombre()* String
+    +getDescripcion()* String
+    +asignarARemito(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +cancelarRemito(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +quitarDeBolsin(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +esNoRecibida() boolean
+    +esRecibidaYRechazada() boolean
+    #cambiarEstado(doc: Documentacion, siguiente: EstadoDocumentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +desdeNombre(nombre: String)$ EstadoDocumentacion
+  }
+  class Registrada {
+    +asignarARemito(doc, resp, fh) void
+    +darDeBaja(doc, resp, fh) void
+  }
+  class EnRemito {
+    +cancelarRemito(doc, resp, fh) void
+    +agregarABolsin(doc, resp, fh) void
+  }
+  class EnBolsinSaliente {
+    +quitarDeBolsin(doc, resp, fh) void
+    +registrarRetiro(doc, resp, fh) void
+  }
+  class EnBolsinEnviado {
+    +aceptar(doc, resp, fh) void
+    +noRecibir(doc, resp, fh) void
+    +rechazar(doc, resp, fh) void
+    +redirigir(doc, resp, fh) void
+  }
+  class RecibidaYAceptada {
+    +esRecibidaYAceptada() boolean
+  }
+  class NoRecibida {
+    +retomarRegistro(doc, resp, fh) void
+    +darDeBaja(doc, resp, fh) void
+    +esNoRecibida() boolean
+  }
+  class RecibidaYRechazada {
+    +retomarRegistro(doc, resp, fh) void
+    +esRecibidaYRechazada() boolean
+  }
+  class ParaRedirigir {
+    +aceptar(doc, resp, fh) void
+    +rechazar(doc, resp, fh) void
+  }
+  class DeBaja
+  class CambioEstadoDocumentacion {
+    &lt;&lt;entity&gt;&gt;
+    -fechaHoraInicio: LocalDateTime
+    -fechaHoraFin: LocalDateTime
+    -estado: EstadoDocumentacion
+    +new(fechaHora: LocalDateTime, estado: EstadoDocumentacion, responsable: Empleado)
+    +sosActual() boolean
+    +setFechaHoraFin(fechaHora: LocalDateTime) void
+  }
+  class Empleado {
+    &lt;&lt;entity&gt;&gt;
+  }
+
+  DetalleRemito --> "1" Documentacion : documentacion
+  Documentacion o--> "1" EstadoDocumentacion : estadoActual
+  Documentacion "1" *--> "1..*" CambioEstadoDocumentacion : cambiosEstado
+  CambioEstadoDocumentacion --> "1" EstadoDocumentacion : estado
+  CambioEstadoDocumentacion --> "1" Empleado : responsable
+  EstadoDocumentacion ..> Documentacion
+  EstadoDocumentacion <|-- Registrada
+  EstadoDocumentacion <|-- EnRemito
+  EstadoDocumentacion <|-- EnBolsinSaliente
+  EstadoDocumentacion <|-- EnBolsinEnviado
+  EstadoDocumentacion <|-- RecibidaYAceptada
+  EstadoDocumentacion <|-- NoRecibida
+  EstadoDocumentacion <|-- RecibidaYRechazada
+  EstadoDocumentacion <|-- ParaRedirigir
+  EstadoDocumentacion <|-- DeBaja
+</pre>
+</div>
+<p class="titulo-modelo">Figura 2a – Vista estática del CU 28: estructura resultante de la aplicación del patrón State</p>
+</section>
+
+<section class="apaisada">
+<div class="diagrama">
+<pre class="mermaid">
+classDiagram
+  direction LR
   class PantallaRegistrarRecepcion {
     &lt;&lt;boundary&gt;&gt;
     -gestor: GestorRecepcionBolsin
@@ -168,12 +331,10 @@ classDiagram
   }
   class GestorRecepcionBolsin {
     &lt;&lt;control&gt;&gt;
-    -estrategiasDisponibles: List~EstrategiaRecepcion~
-    -estrategia: EstrategiaRecepcion
     -empleadoLogueado: Empleado
     -cmLogueada: ComisionMedica
     -numeroBolsinSeleccionado: Integer
-    -opcionSeleccionada: Integer
+    -situacionSeleccionada: SituacionRecepcion
     -documentacionSeleccionada: List~Integer~
     -areaDestino: String
     -fechaHoraActual: LocalDateTime
@@ -187,81 +348,24 @@ classDiagram
     -buscarBolsinesEnviados() List~Bolsin~
     -buscarRemitos(bolsin: Bolsin) List~RemitoResponse~
     -buscarOpcionesRecepcion(bolsin: Bolsin) List~OpcionRecepcionResponse~
-    -setEstrategia(estrategia: EstrategiaRecepcion) void
     -obtenerFechaYHora() void
     -buscarEstados() List~Estado~
     -actualizarEstados(bolsin: Bolsin, estados: List~Estado~) void
+    -buscarEstado(estados: List~Estado~, criterio: Predicate~Estado~) Estado
     -notificarRecepcionBolsin(bolsin: Bolsin) List~NotificacionResponse~
     -finCU() void
   }
-  class EstrategiaRecepcion {
-    &lt;&lt;interface&gt;&gt;
-    +getDescripcion() String
+  class SituacionRecepcion {
+    &lt;&lt;enumeration&gt;&gt;
+    CONTENIDO_IGUAL
+    NO_SE_RECIBE_TODA
+    NO_CORRESPONDE_AL_DESTINO
+    REDIRIGIR_A_OTRA_AREA
+    +desdeCodigo(codigo: Integer)$ Optional~SituacionRecepcion~
+    +esAplicable(bolsin: Bolsin) boolean
     +requiereSeleccionDocumentacion() boolean
     +requiereAreaDestino() boolean
-    +esAplicable(bolsin: Bolsin) boolean
-    +registrarRecepcion(bolsin: Bolsin, numerosDocumentacion: List~Integer~, areaDestino: String, estados: List~Estado~, responsable: Empleado, fechaHora: LocalDateTime) void
-    +buscarEstado(estados: List~Estado~, criterio: Predicate~Estado~)$ Estado
   }
-  class RecepcionCompleta {
-    +getDescripcion() String
-    +requiereSeleccionDocumentacion() boolean
-    +requiereAreaDestino() boolean
-    +esAplicable(bolsin: Bolsin) boolean
-    +registrarRecepcion(...) void
-  }
-  class RecepcionParcial {
-    +getDescripcion() String
-    +requiereSeleccionDocumentacion() boolean
-    +requiereAreaDestino() boolean
-    +esAplicable(bolsin: Bolsin) boolean
-    +registrarRecepcion(...) void
-  }
-  class RecepcionNoCorrespondeDestino {
-    +getDescripcion() String
-    +requiereSeleccionDocumentacion() boolean
-    +requiereAreaDestino() boolean
-    +esAplicable(bolsin: Bolsin) boolean
-    +registrarRecepcion(...) void
-  }
-  class RecepcionParaRedirigir {
-    +getDescripcion() String
-    +requiereSeleccionDocumentacion() boolean
-    +requiereAreaDestino() boolean
-    +esAplicable(bolsin: Bolsin) boolean
-    +registrarRecepcion(...) void
-  }
-  class Bolsin
-  class Remito
-  class Estado
-  class Empleado
-  &lt;&lt;entity&gt;&gt; Bolsin
-  &lt;&lt;entity&gt;&gt; Remito
-  &lt;&lt;entity&gt;&gt; Estado
-  &lt;&lt;entity&gt;&gt; Empleado
-
-  PantallaRegistrarRecepcion ..> GestorRecepcionBolsin
-  GestorRecepcionBolsin o--> "1" EstrategiaRecepcion : estrategia
-  GestorRecepcionBolsin ..> Bolsin
-  GestorRecepcionBolsin ..> Estado
-  GestorRecepcionBolsin ..> Empleado
-  EstrategiaRecepcion <|.. RecepcionCompleta
-  EstrategiaRecepcion <|.. RecepcionParcial
-  EstrategiaRecepcion <|.. RecepcionNoCorrespondeDestino
-  EstrategiaRecepcion <|.. RecepcionParaRedirigir
-  EstrategiaRecepcion ..> Bolsin
-  EstrategiaRecepcion ..> Remito
-  EstrategiaRecepcion ..> Estado
-</pre>
-</div>
-<p class="titulo-modelo">Figura 1a – Vista estática del CU 28: estructura resultante de la aplicación del patrón Strategy</p>
-</section>
-
-<section class="apaisada">
-<div class="diagrama">
-<pre class="mermaid">
-classDiagram
-  direction TB
   class Bolsin {
     &lt;&lt;entity&gt;&gt;
     -numeroBolsin: Integer
@@ -270,37 +374,27 @@ classDiagram
     -numeroPrecinto: String
     +esTuCMDestino(cm: ComisionMedica) boolean
     +sosEnviado() boolean
+    +tenesPrecinto(numero: String) boolean
+    +tuCMOrigenSeLlama(nombre: String) boolean
     +tuDestinoEsCentral() boolean
     +contieneDocumentaciones(numeros: List~Integer~) boolean
     +recibir(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
-    +crearCambioEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
     -obtenerCambioEstadoActual() CambioEstadoBolsin
-    +getRemitos() List~Remito~
   }
   class Remito {
     &lt;&lt;entity&gt;&gt;
     -numero: Integer
     -fecha: LocalDate
-    +contieneAlgunaDocumentacion(numeros: List~Integer~) boolean
-    +recibir(estadoRemito: Estado, estadoDocAceptada: Estado, numerosDocConNovedad: List~Integer~, estadoDocConNovedad: Estado, areaCMCDestino: String, responsable: Empleado, fechaHora: LocalDateTime) void
+    +contieneDocumentacion(numero: Integer) boolean
+    +registrarRecepcion(situacion: SituacionRecepcion, docsConNovedad: List~Integer~, area: String, estadoAceptado: Estado, estadoAceptadoParcial: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    -tenesDocumentacionFaltanteORechazada() boolean
     +setEstado(estado: Estado) void
   }
   class DetalleRemito {
     &lt;&lt;entity&gt;&gt;
-    -areaCMCDestino: String
-    +esDeDocumentacion(numero: Integer) boolean
-    +actualizarEstadoDocumentacion(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
-    +setAreaCMCDestino(area: String) void
   }
   class Documentacion {
-    &lt;&lt;entity&gt;&gt;
-    -numero: Integer
-    -asunto: String
-    -fechaPase: LocalDate
-    +esTuNumero(numero: Integer) boolean
-    +actualizarEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
-    -crearCambioEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
-    -obtenerCambioEstadoActual() CambioEstadoDocumentacion
+    &lt;&lt;Context&gt;&gt;
   }
   class CambioEstadoBolsin {
     &lt;&lt;entity&gt;&gt;
@@ -310,13 +404,6 @@ classDiagram
     +sosEnviado() boolean
     +setFechaHoraFin(fechaHora: LocalDateTime) void
   }
-  class CambioEstadoDocumentacion {
-    &lt;&lt;entity&gt;&gt;
-    -fechaHoraInicio: LocalDateTime
-    -fechaHoraFin: LocalDateTime
-    +sosActual() boolean
-    +setFechaHoraFin(fechaHora: LocalDateTime) void
-  }
   class Estado {
     &lt;&lt;entity&gt;&gt;
     -ambito: String
@@ -324,20 +411,15 @@ classDiagram
     -descripcion: String
     +esAmbitoBolsin() boolean
     +esAmbitoRemito() boolean
-    +esAmbitoDocumentacion() boolean
     +esEnviado() boolean
     +esRecibidoEnCMDestino() boolean
     +esRecibidoYAceptado() boolean
     +esRecibidoYAceptadoParcial() boolean
-    +esNoRecibida() boolean
-    +esRecibidoYRechazado() boolean
-    +esParaRedirigir() boolean
   }
   class Empleado {
     &lt;&lt;entity&gt;&gt;
     -nombre: String
     -apellido: String
-    -email: String
     +getCM() ComisionMedica
   }
   class ComisionMedica {
@@ -350,6 +432,11 @@ classDiagram
     +esCentral() boolean
   }
 
+  PantallaRegistrarRecepcion ..> GestorRecepcionBolsin
+  GestorRecepcionBolsin ..> Bolsin
+  GestorRecepcionBolsin ..> Estado
+  GestorRecepcionBolsin --> "0..1" SituacionRecepcion : situacionSeleccionada
+  GestorRecepcionBolsin --> "1" Empleado : empleadoLogueado
   Bolsin "1" o--> "1..*" Remito : remitos
   Bolsin "1" *--> "1..*" CambioEstadoBolsin : cambiosEstado
   Bolsin --> "1" ComisionMedica : origen
@@ -357,30 +444,31 @@ classDiagram
   Remito "1" *--> "1..*" DetalleRemito : detalleRemito
   Remito --> "1" Estado : estado
   DetalleRemito --> "1" Documentacion : documentacion
-  Documentacion "1" *--> "1..*" CambioEstadoDocumentacion : cambiosEstado
   CambioEstadoBolsin --> "1" Estado : estado
   CambioEstadoBolsin --> "1" Empleado : responsable
-  CambioEstadoDocumentacion --> "1" Estado : estado
-  CambioEstadoDocumentacion --> "1" Empleado : responsable
   Empleado --> "1" ComisionMedica : asignadoA
 </pre>
 </div>
-<p class="titulo-modelo">Figura 1b – Vista estática del CU 28: entidades que colaboran en el registro de la recepción</p>
+<p class="titulo-modelo">Figura 2b – Vista estática del CU 28: clases de interfaz, control y entidades que colaboran con el patrón</p>
 </section>
 <p>
-  Las estrategias concretas implementan <code>registrarRecepcion()</code> con la misma firma de la interfaz. Visibilidad: <code>+</code> público, <code>-</code> privado. Se omiten <code>Sesion</code>, <code>Usuario</code> y
-  <code>TipoDocumento</code> porque no participan de la estructura resultante de la aplicación del patrón; los getters
-  simples tampoco se muestran. Las estrategias concretas redefinen los cinco métodos de la interfaz.
+  Visibilidad: <code>+</code> público, <code>-</code> privado, <code>#</code> protegido; métodos en cursiva o con
+  <code>*</code>: abstractos; subrayados o con <code>$</code>: estáticos. En las clases de estado concreto
+  <code>(...)</code> abrevia la firma <code>(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime)</code>
+  heredada de <code>EstadoDocumentacion</code>; cada una redefine solo las transiciones que salen de ella. Todas
+  redefinen además <code>getNombre()</code> y <code>getDescripcion()</code>. Se omiten <code>Sesion</code>,
+  <code>Usuario</code>, <code>TipoDocumento</code> y los getters simples.
 </p>
 
 <!-- ============================ 3. VISTA DINÁMICA ============================ -->
 <section class="apaisada">
 <h2>3. Vista dinámica de la realización de caso de uso de diseño</h2>
 <p>
-  Se modela la parte del escenario que cambia por la aplicación del patrón: desde que el EB selecciona la opción de
-  recepción (paso 8) hasta la actualización de estados (paso 11). El escenario mostrado es el flujo descripto, con la
-  estrategia <code>RecepcionCompleta</code>; con otra opción solo cambia el objeto estrategia que recibe el mensaje
-  <code>registrarRecepcion()</code>.
+  Se modela la parte del escenario que cambia por la aplicación del patrón: desde que el EB confirma la opción de
+  recepción (paso 10) hasta la actualización de estados (paso 11), para el flujo descripto
+  (<em>el contenido del bolsín es igual al registrado</em>). En los flujos alternativos solo cambia el mensaje que
+  <code>DetalleRemito</code> envía a la documentación (<code>noRecibir()</code>, <code>rechazar()</code> o
+  <code>redirigir()</code>) y, por lo tanto, el estado concreto que se crea.
 </p>
 <div class="diagrama">
 <pre class="mermaid">
@@ -389,57 +477,43 @@ sequenceDiagram
   actor EB as Encargado<br/>de Bolsines
   participant P as :Pantalla<br/>RegistrarRecepcion
   participant G as :Gestor<br/>RecepcionBolsin
-  participant E as estrategia:<br/>RecepcionCompleta
   participant B as seleccionado:<br/>Bolsin
-  participant CB as actual:<br/>CambioEstadoBolsin
-  participant NCB as nuevo:<br/>CambioEstadoBolsin
   participant R as :Remito
   participant DR as :DetalleRemito
   participant D as :Documentacion
+  participant E as actual:<br/>EnBolsinEnviado
   participant CD as actual:CambioEstado<br/>Documentacion
-  participant NCD as nuevo:CambioEstado<br/>Documentacion
-  participant ES as :Estado
+  participant N as :RecibidaY<br/>Aceptada
+  participant NCD as :CambioEstado<br/>Documentacion
 
-  EB->>P: tomarSeleccionOpcion(opcion)
-  P->>G: tomarSeleccionOpcion(opcion, docs, area)
-  G->>E: esAplicable(bolsin)
-  G->>E: requiereSeleccionDocumentacion()
-  G->>E: requiereAreaDestino()
-  G->>G: setEstrategia(estrategia)
-  G->>E: getDescripcion()
-  G-->>P: pedido de confirmación
-  P-->>EB: pedirConfirmacion()
   EB->>P: tomarConfirmacion()
   P->>G: tomarConfirmacion(confirma)
   G->>G: obtenerFechaYHora()
   G->>G: buscarEstados()
   G->>G: actualizarEstados(bolsin, estados)
-  loop Estados [mientras haya estados]
-    G->>ES: esAmbitoBolsin()
-    G->>ES: esRecibidoEnCMDestino()
-  end
-  G->>B: recibir(estado, resp, fh)
-  B->>B: obtenerCambioEstadoActual()
-  B->>CB: setFechaHoraFin(fh)
-  B->>NCB: new(fh, estado, resp)
-  G->>E: registrarRecepcion(bolsin, docs, area, estados, resp, fh)
-  loop Estados [mientras haya estados]
-    E->>ES: esAmbitoRemito()
-    E->>ES: esAmbitoDocumentacion()
-    E->>ES: esRecibidoYAceptado()
-  end
-  E->>B: getRemitos()
+  G->>B: recibir(recibidoEnCMDestino, resp, fh)
   loop Remitos del bolsín [mientras haya remitos]
-    E->>R: recibir(estRemito, estDocAceptada, docsNovedad, estDocNovedad, area, resp, fh)
-    R->>R: setEstado(estadoRemito)
+    G->>R: registrarRecepcion(situacion, docs, area, aceptado, parcial, resp, fh)
     loop Detalles del remito [mientras haya detalles]
       R->>DR: esDeDocumentacion(numero)
-      R->>DR: actualizarEstadoDocumentacion(est, resp, fh)
-      DR->>D: actualizarEstado(est, resp, fh)
-      D->>D: obtenerCambioEstadoActual()
-      D->>CD: setFechaHoraFin(fh)
-      D->>NCD: new(fh, estado, resp)
+      R->>DR: aceptarDocumentacion(resp, fh)
+      DR->>D: aceptar(resp, fh)
+      D->>E: aceptar(this, resp, fh)
+      E->>N: new()
+      E->>E: cambiarEstado(doc, siguiente, resp, fh)
+      E->>D: obtenerCambioEstadoActual()
+      E->>CD: setFechaHoraFin(fh)
+      E->>NCD: new(fh, siguiente, resp)
+      E->>D: agregarCambioEstado(nuevoCambio)
+      E->>D: setEstadoActual(siguiente)
     end
+    R->>R: tenesDocumentacionFaltanteORechazada()
+    loop Detalles del remito [mientras haya detalles]
+      R->>DR: esDocumentacionFaltanteORechazada()
+      DR->>D: esNoRecibida()
+      DR->>D: esRecibidaYRechazada()
+    end
+    R->>R: setEstado(aceptado)
   end
   G->>G: notificarRecepcionBolsin(bolsin)
   G->>G: finCU()
@@ -447,15 +521,20 @@ sequenceDiagram
   P-->>EB: informarEjecucion()
 </pre>
 </div>
-<p class="titulo-modelo">Figura 2 – Vista dinámica del rediseño del CU 28 (selección de opción, confirmación y actualización de estados)</p>
+<p class="titulo-modelo">Figura 3 – Vista dinámica del rediseño del CU 28 con el patrón State (confirmación y actualización de estados)</p>
 </section>
-<p>Abreviaturas usadas en los mensajes: <code>docs</code> = numerosDocumentacion, <code>area</code> = areaDestino, <code>resp</code> = responsable (Empleado), <code>fh</code> = fechaHora, <code>est</code> = estado. Las firmas completas están en la vista estática.</p>
+<p>
+  Abreviaturas usadas en los mensajes: <code>docs</code> = numerosDocumentacion, <code>area</code> = areaDestino,
+  <code>resp</code> = responsable (Empleado), <code>fh</code> = fechaHora, <code>siguiente</code> = estado nuevo creado.
+  Las firmas completas están en la vista estática.
+</p>
 <div class="nota">
   <strong>Decisiones respecto de la realización de análisis:</strong>
-  los mensajes del gestor hacia la pantalla (<code>pedirConfirmacion()</code>, <code>informarEjecucion()</code>, etc.)
-  se resuelven como retorno de los métodos por tratarse de una API REST, igual que en el ejemplo de la cátedra.
-  Los datos del bolsín, sus remitos y las opciones de recepción se devuelven en una única respuesta al seleccionar el bolsín,
-  para no hacer una llamada por remito.
+  la documentación ya no busca su estado destino entre todos los objetos <code>Estado</code>: el estado concreto actual
+  crea el siguiente. <code>esNoRecibida()</code> y <code>esRecibidaYRechazada()</code> también se delegan en el
+  estado actual. Los mensajes del gestor hacia la pantalla (<code>pedirConfirmacion()</code>,
+  <code>informarEjecucion()</code>, etc.) se resuelven como retorno de los métodos por tratarse de una API REST, igual
+  que en el ejemplo de la cátedra.
 </div>
 
 <!-- ============================ 4. IMPLEMENTACIÓN ============================ -->
@@ -473,29 +552,38 @@ sequenceDiagram
 <table>
   <tr><th>Elemento del modelo</th><th>Implementación</th></tr>
   <tr><td>«boundary» PantallaRegistrarRecepcion</td><td><code>boundary/PantallaRegistrarRecepcion.java</code> (controller REST, punto de entrada) y la interfaz React (<code>frontend/src/App.jsx</code>)</td></tr>
-  <tr><td>«control» GestorRecepcionBolsin (Context)</td><td><code>control/GestorRecepcionBolsin.java</code> (servicio)</td></tr>
-  <tr><td>Strategy y estrategias concretas</td><td>paquete <code>strategy/</code></td></tr>
+  <tr><td>«control» GestorRecepcionBolsin</td><td><code>control/GestorRecepcionBolsin.java</code> (servicio)</td></tr>
+  <tr><td>Context del patrón State</td><td><code>entity/Documentacion.java</code></td></tr>
+  <tr><td>State y estados concretos</td><td>paquete <code>state/</code>: <code>EstadoDocumentacion</code> y una clase por estado</td></tr>
   <tr><td>«entity» del dominio</td><td>paquete <code>entity/</code>, mapeadas con JPA</td></tr>
   <tr><td>CU 29 Notificar recepción de bolsín (include)</td><td><code>boundary/InterfazEmail.java</code>: el envío se simula, el e-mail se muestra en pantalla y en el log</td></tr>
 </table>
+
+<h3>4.3 Persistencia del patrón State</h3>
 <p>
-  El gestor no devuelve entidades a la pantalla: arma representaciones con datos primitivos (DTO). Las entidades colaboran
-  entre sí aplicando Experto: por ejemplo el gestor pregunta <code>bolsin.sosEnviado()</code> y es el bolsín quien consulta
-  a su cambio de estado actual, que a su vez le pregunta al <code>Estado</code>.
+  Los estados concretos no tienen atributos propios, por lo que no se guardan como tablas: en la base se almacena el
+  nombre del estado (columna <code>estado_actual</code> de <code>DOCUMENTACION</code> y <code>estado</code> de
+  <code>CAMBIO_ESTADO_DOCUMENTACION</code>). Un <code>AttributeConverter</code> de JPA
+  (<code>EstadoDocumentacionConverter</code>) convierte el objeto estado en su nombre al guardar y, al leer, vuelve a
+  crear el objeto del estado concreto con <code>EstadoDocumentacion.desdeNombre()</code>.
 </p>
 
-<h3>4.3 Flujos que se pueden ejecutar</h3>
+<h3>4.4 Flujos que se pueden ejecutar</h3>
 <table>
-  <tr><th>Flujo</th><th>Cómo demostrarlo</th></tr>
-  <tr><td>Flujo descripto</td><td>Usuario <code>lgomez</code> (CM Córdoba) → bolsín 1 → opción 1 → Confirmar</td></tr>
-  <tr><td>A1: precinto inexistente</td><td>Filtrar por precinto <code>999999</code></td></tr>
-  <tr><td>A2: CM de origen inexistente</td><td>Filtrar por CM de origen <code>Salta</code></td></tr>
-  <tr><td>A3: no se recibe toda la documentación</td><td>Bolsín 2 → opción 2 → marcar la documentación faltante</td></tr>
-  <tr><td>A4: documentación que no corresponde</td><td>Bolsín 3 → opción 3 → marcar la documentación</td></tr>
-  <tr><td>A5: redirigir a otra área</td><td>Usuario <code>mperez</code> (CMC) → bolsín 5 → opción 4 → indicar área</td></tr>
-  <tr><td>A6: el EB no confirma</td><td>"No confirmar" en el diálogo de confirmación</td></tr>
-  <tr><td>Obs. 1: cancelar el CU</td><td>Botón Cancelar, disponible en todos los pasos</td></tr>
+  <tr><th>Flujo</th><th>Cómo demostrarlo</th><th>Transición de la documentación</th></tr>
+  <tr><td>Flujo descripto</td><td>Usuario <code>lgomez</code> (CM Córdoba) → bolsín 1 → opción 1 → Confirmar</td><td>En bolsín enviado → Recibida y aceptada</td></tr>
+  <tr><td>A1: precinto inexistente</td><td>Filtrar por precinto <code>999999</code></td><td>–</td></tr>
+  <tr><td>A2: CM de origen inexistente</td><td>Filtrar por CM de origen <code>Salta</code></td><td>–</td></tr>
+  <tr><td>A3: no se recibe toda la documentación</td><td>Bolsín 2 → opción 2 → marcar la documentación faltante</td><td>En bolsín enviado → No recibida</td></tr>
+  <tr><td>A4: documentación que no corresponde</td><td>Bolsín 3 → opción 3 → marcar la documentación</td><td>En bolsín enviado → Recibida y rechazada</td></tr>
+  <tr><td>A5: redirigir a otra área</td><td>Usuario <code>mperez</code> (CMC) → bolsín 5 → opción 4 → indicar área</td><td>En bolsín enviado → Para redirigir</td></tr>
+  <tr><td>A6: el EB no confirma</td><td>"No confirmar" en el diálogo de confirmación</td><td>Sin cambios</td></tr>
+  <tr><td>Obs. 1: cancelar el CU</td><td>Botón Cancelar, disponible en todos los pasos</td><td>Sin cambios</td></tr>
 </table>
+<p>
+  Además, <code>MaquinaEstadosDocumentacionTest</code> prueba las transiciones del patrón, incluido que una
+  transición no permitida (por ejemplo, rechazar una documentación ya aceptada) se rechaza sin cambiar el estado.
+</p>
 <div class="nota">
   <strong>Supuestos de implementación:</strong> (1) la ERS no indica el estado del remito cuando hay documentación
   rechazada (opción 3); se adoptó <em>Recibido y Aceptado Parcial</em>, por analogía con la opción 2.
@@ -526,7 +614,7 @@ sequenceDiagram
   <figure><img src="img/3-confirmacion.jpg" alt="Paso 3 – Pedido de confirmación"><figcaption>Paso 3 – Pedido de confirmación</figcaption></figure>
   <figure><img src="img/4-resultado.jpg" alt="Paso 4 – Resultado: estados actualizados y notificación enviada"><figcaption>Paso 4 – Resultado: estados actualizados y notificación enviada</figcaption></figure>
 </div>
-<p class="titulo-modelo">Figura 3 – Pantallas del CU 28 Registrar recepción de bolsín (capturas de la aplicación en ejecución)</p>
+<p class="titulo-modelo">Figura 4 – Pantallas del CU 28 Registrar recepción de bolsín (capturas de la aplicación en ejecución)</p>
 
 </div>
 <script type="module">

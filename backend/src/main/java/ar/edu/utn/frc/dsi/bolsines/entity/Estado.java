@@ -5,24 +5,23 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+/**
+ * Estado de Bolsín y de Remito, identificado por ámbito y nombre (modelo de dominio).
+ * La Documentación no usa esta clase: sus estados son la jerarquía del patrón State.
+ */
 @Entity
 public class Estado {
 
     public static final String AMBITO_BOLSIN = "Bolsin";
     public static final String AMBITO_REMITO = "Remito";
-    public static final String AMBITO_DOCUMENTACION = "Documentacion";
 
     public static final String CREADO = "Creado";
     public static final String CERRADO = "Cerrado";
     public static final String ENVIADO = "Enviado";
     public static final String RECIBIDO_EN_CM_DESTINO = "RecibidoEnCMDestino";
-    public static final String REGISTRADA = "Registrada";
     public static final String EN_BOLSIN_ENVIADO = "EnBolsinEnviado";
     public static final String RECIBIDO_Y_ACEPTADO = "RecibidoYAceptado";
     public static final String RECIBIDO_Y_ACEPTADO_PARCIAL = "RecibidoYAceptadoParcial";
-    public static final String NO_RECIBIDA = "NoRecibida";
-    public static final String RECIBIDO_Y_RECHAZADO = "RecibidoYRechazado";
-    public static final String PARA_REDIRIGIR = "ParaRedirigir";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,10 +47,6 @@ public class Estado {
         return AMBITO_REMITO.equals(ambito);
     }
 
-    public boolean esAmbitoDocumentacion() {
-        return AMBITO_DOCUMENTACION.equals(ambito);
-    }
-
     public boolean esEnviado() {
         return ENVIADO.equals(nombre);
     }
@@ -66,18 +61,6 @@ public class Estado {
 
     public boolean esRecibidoYAceptadoParcial() {
         return RECIBIDO_Y_ACEPTADO_PARCIAL.equals(nombre);
-    }
-
-    public boolean esNoRecibida() {
-        return NO_RECIBIDA.equals(nombre);
-    }
-
-    public boolean esRecibidoYRechazado() {
-        return RECIBIDO_Y_RECHAZADO.equals(nombre);
-    }
-
-    public boolean esParaRedirigir() {
-        return PARA_REDIRIGIR.equals(nombre);
     }
 
     public String getAmbito() {

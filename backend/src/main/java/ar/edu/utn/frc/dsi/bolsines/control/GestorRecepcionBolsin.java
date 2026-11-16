@@ -18,14 +18,10 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 import ar.edu.utn.frc.dsi.bolsines.entity.Estado;
 import ar.edu.utn.frc.dsi.bolsines.entity.Remito;
 import ar.edu.utn.frc.dsi.bolsines.entity.Sesion;
+import ar.edu.utn.frc.dsi.bolsines.entity.SituacionRecepcion;
 import ar.edu.utn.frc.dsi.bolsines.repository.BolsinRepository;
 import ar.edu.utn.frc.dsi.bolsines.repository.EstadoRepository;
 import ar.edu.utn.frc.dsi.bolsines.repository.SesionRepository;
-import ar.edu.utn.frc.dsi.bolsines.strategy.EstrategiaRecepcion;
-import ar.edu.utn.frc.dsi.bolsines.strategy.RecepcionCompleta;
-import ar.edu.utn.frc.dsi.bolsines.strategy.RecepcionNoCorrespondeDestino;
-import ar.edu.utn.frc.dsi.bolsines.strategy.RecepcionParaRedirigir;
-import ar.edu.utn.frc.dsi.bolsines.strategy.RecepcionParcial;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,13 +32,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Clase de control del CU 28 Registrar recepción de bolsín.
  *
- * En el patrón Strategy cumple el rol de <<Context>>: mantiene una referencia a la
- * EstrategiaRecepcion elegida por el Encargado de Bolsines y le delega la actualización
- * de remitos y documentación, sin conocer la estrategia concreta.
+ * Coordina el caso de uso y envía los mensajes de recepción a las entidades. No decide a qué
+ * estado pasa cada documentación: eso lo resuelve el patrón State dentro de Documentacion.
  */
 @Service
 public class GestorRecepcionBolsin {
@@ -54,19 +50,11 @@ public class GestorRecepcionBolsin {
     private final EstadoRepository estadoRepository;
     private final InterfazEmail interfazEmail;
 
-    /** Opciones de recepción disponibles: el orden define el número de opción (1 a 4). */
-    private final List<EstrategiaRecepcion> estrategiasDisponibles = List.of(
-            new RecepcionCompleta(),
-            new RecepcionParcial(),
-            new RecepcionNoCorrespondeDestino(),
-            new RecepcionParaRedirigir());
-
     // Estado de la ejecución en curso del caso de uso
     private Empleado empleadoLogueado;
     private ComisionMedica cmLogueada;
     private Integer numeroBolsinSeleccionado;
-    private EstrategiaRecepcion estrategia;
-    private Integer opcionSeleccionada;
+    private SituacionRecepcion situacionSeleccionada;
     private List<Integer> documentacionSeleccionada = new ArrayList<>();
     private String areaDestino;
     private LocalDateTime fechaHoraActual;
@@ -155,8 +143,7 @@ public class GestorRecepcionBolsin {
                         "El bolsín seleccionado no está pendiente de recepción en esta comisión médica."));
 
         this.numeroBolsinSeleccionado = bolsin.getNumeroBolsin();
-        this.estrategia = null;
-        this.opcionSeleccionada = null;
+        this.situacionSeleccionada = null;
 
         return new DetalleBolsinResponse(
                 bolsin.getNumeroBolsin(),
@@ -186,11 +173,10 @@ public class GestorRecepcionBolsin {
 
     private List<OpcionRecepcionResponse> buscarOpcionesRecepcion(Bolsin bolsin) {
         List<OpcionRecepcionResponse> opciones = new ArrayList<>();
-        for (int i = 0; i < estrategiasDisponibles.size(); i++) {
-            EstrategiaRecepcion opcion = estrategiasDisponibles.get(i);
-            opciones.add(new OpcionRecepcionResponse(i + 1, opcion.getDescripcion(),
-                    opcion.requiereSeleccionDocumentacion(), opcion.requiereAreaDestino(),
-                    opcion.esAplicable(bolsin)));
+        for (SituacionRecepcion situacion : SituacionRecepcion.values()) {
+            opciones.add(new OpcionRecepcionResponse(situacion.getCodigo(), situacion.getDescripcion(),
+                    situacion.requiereSeleccionDocumentacion(), situacion.requiereAreaDestino(),
+                    situacion.esAplicable(bolsin)));
         }
         return opciones;
     }
@@ -201,11 +187,9 @@ public class GestorRecepcionBolsin {
     public PedidoConfirmacionResponse tomarSeleccionOpcion(Integer opcion, List<Integer> numerosDocumentacion,
                                                            String areaDestino) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
-        if (opcion == null || opcion < 1 || opcion > estrategiasDisponibles.size()) {
-            throw new ReglaNegocioException(HttpStatus.BAD_REQUEST, "Debe seleccionar una opción de recepción válida.");
-        }
-
-        EstrategiaRecepcion elegida = estrategiasDisponibles.get(opcion - 1);
+        SituacionRecepcion elegida = SituacionRecepcion.desdeCodigo(opcion)
+                .orElseThrow(() -> new ReglaNegocioException(HttpStatus.BAD_REQUEST,
+                        "Debe seleccionar una opción de recepción válida."));
         List<Integer> documentacion = numerosDocumentacion == null ? List.of() : List.copyOf(numerosDocumentacion);
 
         if (!elegida.esAplicable(bolsin)) {
@@ -233,8 +217,7 @@ public class GestorRecepcionBolsin {
             area = areaDestino.trim();
         }
 
-        setEstrategia(elegida);
-        this.opcionSeleccionada = opcion;
+        this.situacionSeleccionada = elegida;
         this.documentacionSeleccionada = documentacion;
         this.areaDestino = area;
 
@@ -243,23 +226,17 @@ public class GestorRecepcionBolsin {
                 "¿Confirma el registro de la recepción del bolsín N° " + bolsin.getNumeroBolsin() + "?");
     }
 
-    /** Strategy: el contexto recibe la estrategia concreta con la que va a trabajar. */
-    private void setEstrategia(EstrategiaRecepcion estrategia) {
-        this.estrategia = estrategia;
-    }
-
     // ------------------------------------------------------------------ Pasos 10 a 12
 
     @Transactional
     public ResultadoRecepcionResponse tomarConfirmacion(boolean confirma) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
-        if (estrategia == null) {
+        if (situacionSeleccionada == null) {
             throw new ReglaNegocioException(HttpStatus.CONFLICT, "Primero debe seleccionar una opción de recepción.");
         }
         if (!confirma) {
             // A6: el EB no confirma. Se descarta la opción y vuelve a elegir.
-            this.estrategia = null;
-            this.opcionSeleccionada = null;
+            this.situacionSeleccionada = null;
             this.documentacionSeleccionada = new ArrayList<>();
             this.areaDestino = null;
             return new ResultadoRecepcionResponse(false,
@@ -290,16 +267,28 @@ public class GestorRecepcionBolsin {
     }
 
     /**
-     * El bolsín siempre pasa a Recibido en CM destino. Cómo quedan los remitos y la
-     * documentación depende de la situación de recepción: se delega en la estrategia.
+     * El bolsín pasa a Recibido en CM destino y cada remito registra la recepción de su
+     * documentación. Los cambios de estado de la documentación los resuelve el patrón State.
      */
     private void actualizarEstados(Bolsin bolsin, List<Estado> estados) {
-        Estado recibidoEnCMDestino = EstrategiaRecepcion.buscarEstado(estados,
-                e -> e.esAmbitoBolsin() && e.esRecibidoEnCMDestino());
-        bolsin.recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual);
+        Estado recibidoEnCMDestino = buscarEstado(estados, e -> e.esAmbitoBolsin() && e.esRecibidoEnCMDestino());
+        Estado remitoAceptado = buscarEstado(estados, e -> e.esAmbitoRemito() && e.esRecibidoYAceptado());
+        Estado remitoAceptadoParcial = buscarEstado(estados,
+                e -> e.esAmbitoRemito() && e.esRecibidoYAceptadoParcial());
 
-        estrategia.registrarRecepcion(bolsin, documentacionSeleccionada, areaDestino, estados,
-                empleadoLogueado, fechaHoraActual);
+        bolsin.recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual);
+        for (Remito remito : bolsin.getRemitos()) {
+            remito.registrarRecepcion(situacionSeleccionada, documentacionSeleccionada, areaDestino,
+                    remitoAceptado, remitoAceptadoParcial, empleadoLogueado, fechaHoraActual);
+        }
+    }
+
+    /** Cada Estado responde por su ámbito y su nombre. */
+    private Estado buscarEstado(List<Estado> estados, Predicate<Estado> criterio) {
+        return estados.stream()
+                .filter(criterio)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No se encuentra parametrizado un estado requerido"));
     }
 
     /**
@@ -353,8 +342,7 @@ public class GestorRecepcionBolsin {
 
     private void limpiarSeleccion() {
         this.numeroBolsinSeleccionado = null;
-        this.estrategia = null;
-        this.opcionSeleccionada = null;
+        this.situacionSeleccionada = null;
         this.documentacionSeleccionada = new ArrayList<>();
         this.areaDestino = null;
         this.fechaHoraActual = null;

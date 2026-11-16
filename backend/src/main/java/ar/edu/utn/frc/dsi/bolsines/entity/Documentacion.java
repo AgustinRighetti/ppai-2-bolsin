@@ -1,7 +1,11 @@
 package ar.edu.utn.frc.dsi.bolsines.entity;
 
+import ar.edu.utn.frc.dsi.bolsines.state.EstadoDocumentacion;
+import ar.edu.utn.frc.dsi.bolsines.state.EstadoDocumentacionConverter;
+import ar.edu.utn.frc.dsi.bolsines.state.Registrada;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +20,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Patrón State (Gamma) - rol <<Context>>.
+ *
+ * Mantiene una referencia a su estado actual (EstadoDocumentacion) y le delega cada evento de la
+ * máquina de estados. No contiene condicionales sobre el estado: es el estado concreto el que
+ * sabe si la transición está permitida y cuál es el estado siguiente.
+ */
 @Entity
 public class Documentacion {
 
@@ -30,6 +41,8 @@ public class Documentacion {
     private TipoDocumento tipoDocumento;
     @ManyToOne(optional = false)
     private ComisionMedica comisionMedicaOrigen;
+    @Convert(converter = EstadoDocumentacionConverter.class)
+    private EstadoDocumentacion estadoActual;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "documentacion_id")
     @OrderBy("fechaHoraInicio ASC")
@@ -38,14 +51,93 @@ public class Documentacion {
     protected Documentacion() {
     }
 
+    /** CU 7 Registrar documentación: toda documentación nace en estado Registrada. */
     public Documentacion(Integer numero, String asunto, LocalDate fechaPase, TipoDocumento tipoDocumento,
-                         ComisionMedica comisionMedicaOrigen) {
+                         ComisionMedica comisionMedicaOrigen, Empleado responsable, LocalDateTime fechaHora) {
         this.numero = numero;
         this.asunto = asunto;
         this.fechaPase = fechaPase;
         this.tipoDocumento = tipoDocumento;
         this.comisionMedicaOrigen = comisionMedicaOrigen;
+        this.estadoActual = new Registrada();
+        this.cambiosEstado.add(new CambioEstadoDocumentacion(fechaHora, estadoActual, responsable));
     }
+
+    // ---- Eventos: el contexto delega en su estado actual ----
+
+    public void asignarARemito(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.asignarARemito(this, responsable, fechaHora);
+    }
+
+    public void cancelarRemito(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.cancelarRemito(this, responsable, fechaHora);
+    }
+
+    public void agregarABolsin(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.agregarABolsin(this, responsable, fechaHora);
+    }
+
+    public void quitarDeBolsin(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.quitarDeBolsin(this, responsable, fechaHora);
+    }
+
+    public void registrarRetiro(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.registrarRetiro(this, responsable, fechaHora);
+    }
+
+    public void aceptar(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.aceptar(this, responsable, fechaHora);
+    }
+
+    public void noRecibir(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.noRecibir(this, responsable, fechaHora);
+    }
+
+    public void rechazar(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.rechazar(this, responsable, fechaHora);
+    }
+
+    public void redirigir(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.redirigir(this, responsable, fechaHora);
+    }
+
+    public void retomarRegistro(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.retomarRegistro(this, responsable, fechaHora);
+    }
+
+    public void darDeBaja(Empleado responsable, LocalDateTime fechaHora) {
+        estadoActual.darDeBaja(this, responsable, fechaHora);
+    }
+
+    // ---- Consultas: también se delegan en el estado ----
+
+    public boolean esEnBolsinEnviado() {
+        return estadoActual.esEnBolsinEnviado();
+    }
+
+    public boolean esNoRecibida() {
+        return estadoActual.esNoRecibida();
+    }
+
+    public boolean esRecibidaYRechazada() {
+        return estadoActual.esRecibidaYRechazada();
+    }
+
+    // ---- Usados por los estados concretos al hacer la transición ----
+
+    public CambioEstadoDocumentacion obtenerCambioEstadoActual() {
+        return cambiosEstado.stream().filter(CambioEstadoDocumentacion::sosActual).findFirst().orElse(null);
+    }
+
+    public void agregarCambioEstado(CambioEstadoDocumentacion cambioEstado) {
+        cambiosEstado.add(cambioEstado);
+    }
+
+    public void setEstadoActual(EstadoDocumentacion estadoActual) {
+        this.estadoActual = estadoActual;
+    }
+
+    // ---- Datos ----
 
     public boolean esTuNumero(Integer numero) {
         return this.numero.equals(numero);
@@ -55,34 +147,12 @@ public class Documentacion {
         return tipoDocumento.getNombre();
     }
 
-    /**
-     * Cierra el cambio de estado vigente y crea uno nuevo con el estado indicado,
-     * dejando registrado el empleado responsable (trazabilidad).
-     */
-    public void actualizarEstado(Estado nuevoEstado, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion actual = obtenerCambioEstadoActual();
-        if (actual != null) {
-            actual.setFechaHoraFin(fechaHora);
-        }
-        crearCambioEstado(nuevoEstado, responsable, fechaHora);
-    }
-
-    private void crearCambioEstado(Estado estado, Empleado responsable, LocalDateTime fechaHora) {
-        cambiosEstado.add(new CambioEstadoDocumentacion(fechaHora, estado, responsable));
-    }
-
-    private CambioEstadoDocumentacion obtenerCambioEstadoActual() {
-        return cambiosEstado.stream().filter(CambioEstadoDocumentacion::sosActual).findFirst().orElse(null);
-    }
-
-    public String getNombreEstadoActual() {
-        CambioEstadoDocumentacion actual = obtenerCambioEstadoActual();
-        return actual == null ? null : actual.getNombreEstado();
+    public EstadoDocumentacion getEstadoActual() {
+        return estadoActual;
     }
 
     public String getDescripcionEstadoActual() {
-        CambioEstadoDocumentacion actual = obtenerCambioEstadoActual();
-        return actual == null ? null : actual.getDescripcionEstado();
+        return estadoActual.getDescripcion();
     }
 
     public Integer getNumero() {

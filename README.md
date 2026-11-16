@@ -1,6 +1,6 @@
 # PPAI 2026 · Bolsines · CU 28 Registrar recepción de bolsín
 
-Segunda entrega (Diseño) del Grupo 14 · 3K2. Rediseño con el patrón **Strategy** e implementación del caso de uso.
+Segunda entrega (Diseño) del Grupo 14 · 3K2. Rediseño con el patrón **State** (máquina de estados de Documentación) e implementación del caso de uso.
 
 | | |
 |---|---|
@@ -26,6 +26,10 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Si el backend no arranca porque la base quedó de una versión anterior, borrar `backend/data/` (se vuelve a crear con los datos de prueba).
+
+Tests de la máquina de estados: `cd backend && mvn test`.
 
 Si `java` no se encuentra después de instalarlo con Homebrew:
 
@@ -60,10 +64,14 @@ Los e-mails del CU 29 se simulan: se muestran en la pantalla de resultado y se e
 | Elemento del modelo | Código |
 |---|---|
 | Boundary `PantallaRegistrarRecepcion` | `backend/.../boundary/PantallaRegistrarRecepcion.java` (controller REST) + `frontend/src/App.jsx` |
-| Control `GestorRecepcionBolsin` (Context del Strategy) | `backend/.../control/GestorRecepcionBolsin.java` |
-| Strategy `EstrategiaRecepcion` y estrategias concretas | `backend/.../strategy/` |
+| Control `GestorRecepcionBolsin` | `backend/.../control/GestorRecepcionBolsin.java` |
+| Context del State: `Documentacion` | `backend/.../entity/Documentacion.java` |
+| State `EstadoDocumentacion` y los 9 estados concretos | `backend/.../state/` |
+| Persistencia del estado (nombre ↔ objeto) | `backend/.../state/EstadoDocumentacionConverter.java` |
+| Opciones de recepción del paso 7 | `backend/.../entity/SituacionRecepcion.java` |
+| Tests de las transiciones | `backend/src/test/.../state/MaquinaEstadosDocumentacionTest.java` |
 | Entidades del dominio | `backend/.../entity/` |
 | Persistencia | `backend/.../repository/` |
 | Datos de prueba y cambio de usuario (fuera del CU) | `backend/.../soporte/` |
 
-El documento de la entrega está en `docs/PPAI2026_3K2_G14_E2_Diseño.html` (abrirlo en el navegador e imprimirlo como PDF).
+El documento de la entrega está en `docs/PPAI2026_3K2_G14_E2_Diseño.html` y exportado en `docs/PPAI2026_3K2_G14_E2_Diseño.pdf`.
