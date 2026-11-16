@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPAI2026_3K2_G14_E2_Diseño</title>
+<style>
+  :root { --azul: #1f5fae; --texto: #1c2733; --suave: #5b6876; --borde: #c9d2dc; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Calibri, 'Segoe UI', system-ui, sans-serif; color: var(--texto); background: #fff; line-height: 1.45; font-size: 11pt; }
+  .hoja { max-width: 190mm; margin: 0 auto; padding: 10mm 6mm; }
+  .encabezado { display: grid; grid-template-columns: 1fr 2fr 1fr; border: 1px solid #000; text-align: center; font-size: 9pt; margin-bottom: 8mm; }
+  .encabezado > div { padding: 3mm; display: grid; place-items: center; }
+  .encabezado > div + div { border-left: 1px solid #000; }
+  .encabezado strong { font-size: 11pt; }
+  h1 { color: var(--azul); font-size: 22pt; text-align: center; margin: 14mm 0 2mm; }
+  h2 { color: var(--azul); font-size: 15pt; border-bottom: 2px solid var(--azul); padding-bottom: 1mm; margin: 9mm 0 3mm; page-break-after: avoid; }
+  h3 { color: #17447d; font-size: 12pt; margin: 6mm 0 2mm; page-break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 3mm 0; font-size: 10pt; }
+  th, td { border: 1px solid var(--borde); padding: 1.6mm 2.4mm; text-align: left; vertical-align: top; }
+  th { background: #efe3f0; }
+  code { font-family: Consolas, Menlo, monospace; font-size: 9.5pt; background: #f1f4f8; padding: 0 1mm; border-radius: 2px; }
+  .caratula p { text-align: center; margin: 1.5mm 0; }
+  .caratula .sub { font-size: 14pt; color: var(--azul); font-weight: 700; }
+  .completar { background: #fff3a6; padding: 0 1mm; }
+  .nota { border-left: 4px solid #f6c443; background: #fffbea; padding: 2.5mm 4mm; margin: 4mm 0; font-size: 10pt; }
+  .diagrama { border: 1px solid var(--borde); border-radius: 4px; padding: 3mm; margin: 3mm 0; overflow-x: auto; page-break-inside: avoid; text-align: center; }
+  .titulo-modelo { text-align: center; font-weight: 700; font-size: 10pt; color: var(--suave); margin: 1mm 0 5mm; }
+  .capturas figure { margin: 0; page-break-inside: avoid; }
+  .capturas img { width: 100%; border: 1px solid var(--borde); border-radius: 4px; display: block; }
+  .capturas figcaption { font-size: 9pt; color: var(--suave); text-align: center; margin-top: 1mm; }
+  .salto { page-break-before: always; }
+  .apaisada { page: apaisada; page-break-before: always; }
+  .diagrama svg, .diagrama img { max-width: 100%; height: auto; }
+  pre.mermaid { margin: 0; }
+  @media screen { .hoja { max-width: 1100px; } }
+  .grilla { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .caja { border: 1px solid var(--borde); border-radius: 4px; padding: 3mm; font-size: 10pt; }
+  .caja h4 { margin: 0 0 1.5mm; color: var(--azul); }
+  .caja ul { margin: 0; padding-left: 5mm; }
+  .pie { margin-top: 8mm; border-top: 1px solid #000; font-size: 9pt; padding-top: 1.5mm; display: flex; justify-content: space-between; }
+  .wire { border: 1.5px solid #6b7785; border-radius: 6px; padding: 3mm; font-size: 9.5pt; background: #fafbfc; }
+  .wire .barra { background: var(--azul); color: #fff; padding: 1.5mm 3mm; margin: -3mm -3mm 3mm; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; }
+  .wire .btn { display: inline-block; border: 1px solid var(--azul); border-radius: 4px; padding: 0.5mm 3mm; color: var(--azul); }
+  .wire .btn.p { background: var(--azul); color: #fff; }
+  .wire .fila { border-bottom: 1px solid var(--borde); padding: 1.2mm 0; display: flex; justify-content: space-between; gap: 2mm; }
+  @media print {
+    @page apaisada { size: A4 landscape; margin: 10mm; }
+    .apaisada .diagrama { border: 0; padding: 0; }
+    .apaisada .diagrama img { max-width: 100%; max-height: 132mm; width: auto; height: auto; }
+    .apaisada h2 { margin-top: 0; }
+    .apaisada .titulo-modelo { margin-bottom: 0; }
+    h1 { margin: 2mm 0 1mm; font-size: 19pt; }
+    .encabezado { margin-bottom: 4mm; }
+    .caratula th, .caratula td { padding: 1mm 2.4mm; }
+    .caratula h3 { margin: 3mm 0 1mm; }
+    .caratula br { display: none; }
+    @page { size: A4; margin: 14mm 12mm 16mm; @bottom-right { content: "Hoja " counter(page) " de " counter(pages); font-size: 9pt; } @bottom-left { content: "Ciclo lectivo 2026"; font-size: 9pt; } }
+    .hoja { padding: 0; max-width: none; }
+    .no-imprimir { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+<div class="nota no-imprimir">
+  <strong>Antes de entregar:</strong> completar los datos resaltados en amarillo y exportar con
+  <em>Imprimir → Guardar como PDF</em> (A4) con el nombre <code>PPAI2026_3K2_G14_E2_Diseño.pdf</code>.
+  Los diagramas se dibujan con Mermaid, por lo que hace falta conexión a internet al abrir el archivo.
+</div>
+
+<!-- ============================ CARÁTULA ============================ -->
+<div class="encabezado">
+  <div>Universidad Tecnológica Nacional<br>Facultad Regional Córdoba<br>Ing. en Sistemas de Información</div>
+  <div><strong>Diseño de Sistemas de Información<br>Proyecto Práctico de Aplicación Integrador</strong></div>
+  <div>UTN · FRC<br>DSI</div>
+</div>
+
+<div class="caratula">
+  <h1>Proyecto Práctico de Aplicación Integrador</h1>
+  <p class="sub">Entrega 2: Diseño</p>
+  <p><strong>Caso de estudio:</strong> Bolsines</p>
+  <p><strong>Tema de la entrega:</strong> Rediseño de la realización del CU 28 Registrar recepción de bolsín con el patrón Strategy, implementación y diseño de las interfaces de usuario</p>
+  <br>
+  <table>
+    <tr><th>Universidad / Facultad</th><td>Universidad Tecnológica Nacional – Facultad Regional Córdoba</td></tr>
+    <tr><th>Cátedra</th><td>Diseño de Sistemas de Información</td></tr>
+    <tr><th>Curso</th><td>3K2</td></tr>
+    <tr><th>Número de grupo</th><td>14 (grupo par)</td></tr>
+    <tr><th>Número de entrega</th><td>2</td></tr>
+    <tr><th>Fecha de entrega</th><td>17 de noviembre de 2026</td></tr>
+    <tr><th>Docentes del curso</th><td>Ing. Cecilia Massano, Ing. Valeria Abdala, Ing. María Salomé Sánchez Cassia, Mateo Crespo</td></tr>
+    <tr><th>Docente tutor</th><td>Ing. Valeria Abdala</td></tr>
+  </table>
+  <h3>Integrantes del grupo</h3>
+  <table>
+    <tr><th>Apellido y nombre</th><th>Legajo</th><th>Correo electrónico</th></tr>
+    <tr><td>Altamirano Decicco, Juan Cruz</td><td>403209</td><td>juanetealtamirano@gmail.com</td></tr>
+    <tr><td>Arata Robledo, Santino</td><td>406800</td><td>santinoaratarobledo@gmail.com</td></tr>
+    <tr><td>Caramuti, Francisco</td><td>406401</td><td>franciscocaramuti@gmail.com</td></tr>
+    <tr><td>Monge, Jeremías</td><td>404669</td><td>jeremonge10@gmail.com</td></tr>
+    <tr><td>Pasquini, Lucas Valentín</td><td>402256</td><td>lucas.pasqui24@gmail.com</td></tr>
+    <tr><td>Porello, Juan</td><td>402622</td><td>juanporello11@gmail.com</td></tr>
+    <tr><td>Righetti, Agustín</td><td>403683</td><td>agurighetti@gmail.com</td></tr>
+    <tr><td>Scozzari Aldrey, Ignacio</td><td>404929</td><td>ignaciosaldrey@gmail.com</td></tr>
+    <tr><td>Vissani, Bruno</td><td>406816</td><td>Brunovissani47@gmail.com</td></tr>
+  </table>
+</div>
+
+<!-- ============================ 1. PATRÓN ============================ -->
+<h2 class="salto">1. Identificación del patrón implementado</h2>
+<p><strong>Patrón:</strong> Strategy (Gamma et al., patrón de comportamiento), acordado con la docente tutora.</p>
+
+<h3>1.1 Problema que se propone resolver</h3>
+<p>
+  En el paso 7 del CU 28 el Encargado de Bolsines indica en qué situación llegó el bolsín. Según la regla de negocio
+  <em>Recepción de un Bolsín en una CM Destino</em> existen cuatro situaciones y cada una actualiza los remitos y la
+  documentación de manera distinta:
+</p>
+<table>
+  <tr><th>Opción de recepción</th><th>Remitos</th><th>Documentación</th></tr>
+  <tr><td>1. El contenido es igual al registrado</td><td>Recibido y Aceptado</td><td>Toda: Recibida y Aceptada</td></tr>
+  <tr><td>2. No se recibe toda la documentación</td><td>Recibido y Aceptado Parcial (los que tienen faltantes)</td><td>Faltante: No Recibida. Resto: Recibida y Aceptada</td></tr>
+  <tr><td>3. Documentación que no corresponde al destino</td><td>Recibido y Aceptado Parcial (los que tienen rechazos)</td><td>Indicada: Recibida y Rechazada. Resto: Recibida y Aceptada</td></tr>
+  <tr><td>4. Documentación para redirigir a otra área (solo CMC)</td><td>Recibido y Aceptado</td><td>Indicada: Para Redirigir (con área destino). Resto: Recibida y Aceptada</td></tr>
+</table>
+<p>
+  En la realización de análisis (Entrega 1) toda esa lógica quedaba en el método <code>actualizarEstados()</code> del
+  <code>GestorRecepcionBolsin</code>. Al incorporar los flujos alternativos A3, A4 y A5 ese método se convierte en una
+  estructura condicional que crece con cada situación nueva, mezcla cuatro algoritmos distintos en la clase de control y
+  obliga a modificar el gestor cada vez que cambia una regla de recepción.
+</p>
+
+<h3>1.2 Justificación</h3>
+<ul>
+  <li><strong>Familia de algoritmos intercambiables:</strong> las cuatro opciones resuelven el mismo objetivo (dejar remitos y documentación en el estado que corresponde) con algoritmos diferentes, y la elección se hace en tiempo de ejecución, cuando el EB selecciona la opción.</li>
+  <li><strong>Elimina el condicional del gestor:</strong> el gestor (Context) conserva una referencia a <code>EstrategiaRecepcion</code> y delega con un único mensaje polimórfico <code>registrarRecepcion()</code>.</li>
+  <li><strong>Abierto a extensión:</strong> una nueva situación de recepción se agrega como una clase nueva, sin tocar el gestor ni las estrategias existentes.</li>
+  <li><strong>Cohesión y expertos:</strong> cada estrategia conoce solo su regla; las entidades siguen siendo las expertas en cambiar su propio estado (<code>Remito.recibir()</code>, <code>Documentacion.actualizarEstado()</code>).</li>
+  <li><strong>Lo que no varía queda en el contexto:</strong> el bolsín siempre pasa a <em>Recibido en CM destino</em>, por eso ese cambio lo sigue haciendo el gestor.</li>
+</ul>
+<table>
+  <tr><th>Rol del patrón</th><th>Clase del diseño</th></tr>
+  <tr><td>Context</td><td><code>GestorRecepcionBolsin</code></td></tr>
+  <tr><td>Strategy</td><td><code>EstrategiaRecepcion</code> (interfaz)</td></tr>
+  <tr><td>ConcreteStrategy</td><td><code>RecepcionCompleta</code>, <code>RecepcionParcial</code>, <code>RecepcionNoCorrespondeDestino</code>, <code>RecepcionParaRedirigir</code></td></tr>
+  <tr><td>Cliente</td><td><code>PantallaRegistrarRecepcion</code> (informa la opción elegida por el EB)</td></tr>
+</table>
+
+<!-- ============================ 2. VISTA ESTÁTICA ============================ -->
+<section class="apaisada">
+<h2>2. Vista estática de la realización de caso de uso de diseño</h2>
+<div class="diagrama">
+<pre class="mermaid">
+classDiagram
+  direction TB
+  class PantallaRegistrarRecepcion {
+    &lt;&lt;boundary&gt;&gt;
+    -gestor: GestorRecepcionBolsin
+    +opcionRegistrarRecepcionBolsin() InicioResponse
+    -habilitarPantalla() InicioResponse
+    +tomarFiltroBolsines(request: FiltrarBolsinesRequest) List~BolsinResponse~
+    +tomarSeleccionBolsin(request: SeleccionarBolsinRequest) DetalleBolsinResponse
+    +tomarSeleccionOpcion(request: SeleccionarOpcionRequest) PedidoConfirmacionResponse
+    +tomarConfirmacion(request: ConfirmacionRequest) ResultadoRecepcionResponse
+    +tomarCancelacion() MensajeResponse
+  }
+  class GestorRecepcionBolsin {
+    &lt;&lt;control&gt;&gt;
+    -estrategiasDisponibles: List~EstrategiaRecepcion~
+    -estrategia: EstrategiaRecepcion
+    -empleadoLogueado: Empleado
+    -cmLogueada: ComisionMedica
+    -numeroBolsinSeleccionado: Integer
+    -opcionSeleccionada: Integer
+    -documentacionSeleccionada: List~Integer~
+    -areaDestino: String
+    -fechaHoraActual: LocalDateTime
+    +nuevaRecepcionBolsin() InicioResponse
+    +tomarFiltroBolsines(numeroPrecinto: String, cmOrigen: String) List~BolsinResponse~
+    +tomarSeleccionBolsin(numeroBolsin: Integer) DetalleBolsinResponse
+    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String) PedidoConfirmacionResponse
+    +tomarConfirmacion(confirma: boolean) ResultadoRecepcionResponse
+    +cancelarCU() void
+    -buscarCMLogueado() void
+    -buscarBolsinesEnviados() List~Bolsin~
+    -buscarRemitos(bolsin: Bolsin) List~RemitoResponse~
+    -buscarOpcionesRecepcion(bolsin: Bolsin) List~OpcionRecepcionResponse~
+    -setEstrategia(estrategia: EstrategiaRecepcion) void
+    -obtenerFechaYHora() void
+    -buscarEstados() List~Estado~
+    -actualizarEstados(bolsin: Bolsin, estados: List~Estado~) void
+    -notificarRecepcionBolsin(bolsin: Bolsin) List~NotificacionResponse~
+    -finCU() void
+  }
+  class EstrategiaRecepcion {
+    &lt;&lt;interface&gt;&gt;
+    +getDescripcion() String
+    +requiereSeleccionDocumentacion() boolean
+    +requiereAreaDestino() boolean
+    +esAplicable(bolsin: Bolsin) boolean
+    +registrarRecepcion(bolsin: Bolsin, numerosDocumentacion: List~Integer~, areaDestino: String, estados: List~Estado~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +buscarEstado(estados: List~Estado~, criterio: Predicate~Estado~)$ Estado
+  }
+  class RecepcionCompleta {
+    +getDescripcion() String
+    +requiereSeleccionDocumentacion() boolean
+    +requiereAreaDestino() boolean
+    +esAplicable(bolsin: Bolsin) boolean
+    +registrarRecepcion(...) void
+  }
+  class RecepcionParcial {
+    +getDescripcion() String
+    +requiereSeleccionDocumentacion() boolean
+    +requiereAreaDestino() boolean
+    +esAplicable(bolsin: Bolsin) boolean
+    +registrarRecepcion(...) void
+  }
+  class RecepcionNoCorrespondeDestino {
+    +getDescripcion() String
+    +requiereSeleccionDocumentacion() boolean
+    +requiereAreaDestino() boolean
+    +esAplicable(bolsin: Bolsin) boolean
+    +registrarRecepcion(...) void
+  }
+  class RecepcionParaRedirigir {
+    +getDescripcion() String
+    +requiereSeleccionDocumentacion() boolean
+    +requiereAreaDestino() boolean
+    +esAplicable(bolsin: Bolsin) boolean
+    +registrarRecepcion(...) void
+  }
+  class Bolsin
+  class Remito
+  class Estado
+  class Empleado
+  &lt;&lt;entity&gt;&gt; Bolsin
+  &lt;&lt;entity&gt;&gt; Remito
+  &lt;&lt;entity&gt;&gt; Estado
+  &lt;&lt;entity&gt;&gt; Empleado
+
+  PantallaRegistrarRecepcion ..> GestorRecepcionBolsin
+  GestorRecepcionBolsin o--> "1" EstrategiaRecepcion : estrategia
+  GestorRecepcionBolsin ..> Bolsin
+  GestorRecepcionBolsin ..> Estado
+  GestorRecepcionBolsin ..> Empleado
+  EstrategiaRecepcion <|.. RecepcionCompleta
+  EstrategiaRecepcion <|.. RecepcionParcial
+  EstrategiaRecepcion <|.. RecepcionNoCorrespondeDestino
+  EstrategiaRecepcion <|.. RecepcionParaRedirigir
+  EstrategiaRecepcion ..> Bolsin
+  EstrategiaRecepcion ..> Remito
+  EstrategiaRecepcion ..> Estado
+</pre>
+</div>
+<p class="titulo-modelo">Figura 1a – Vista estática del CU 28: estructura resultante de la aplicación del patrón Strategy</p>
+</section>
+
+<section class="apaisada">
+<div class="diagrama">
+<pre class="mermaid">
+classDiagram
+  direction TB
+  class Bolsin {
+    &lt;&lt;entity&gt;&gt;
+    -numeroBolsin: Integer
+    -fecha: LocalDate
+    -peso: Integer
+    -numeroPrecinto: String
+    +esTuCMDestino(cm: ComisionMedica) boolean
+    +sosEnviado() boolean
+    +tuDestinoEsCentral() boolean
+    +contieneDocumentaciones(numeros: List~Integer~) boolean
+    +recibir(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +crearCambioEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    -obtenerCambioEstadoActual() CambioEstadoBolsin
+    +getRemitos() List~Remito~
+  }
+  class Remito {
+    &lt;&lt;entity&gt;&gt;
+    -numero: Integer
+    -fecha: LocalDate
+    +contieneAlgunaDocumentacion(numeros: List~Integer~) boolean
+    +recibir(estadoRemito: Estado, estadoDocAceptada: Estado, numerosDocConNovedad: List~Integer~, estadoDocConNovedad: Estado, areaCMCDestino: String, responsable: Empleado, fechaHora: LocalDateTime) void
+    +setEstado(estado: Estado) void
+  }
+  class DetalleRemito {
+    &lt;&lt;entity&gt;&gt;
+    -areaCMCDestino: String
+    +esDeDocumentacion(numero: Integer) boolean
+    +actualizarEstadoDocumentacion(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +setAreaCMCDestino(area: String) void
+  }
+  class Documentacion {
+    &lt;&lt;entity&gt;&gt;
+    -numero: Integer
+    -asunto: String
+    -fechaPase: LocalDate
+    +esTuNumero(numero: Integer) boolean
+    +actualizarEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearCambioEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    -obtenerCambioEstadoActual() CambioEstadoDocumentacion
+  }
+  class CambioEstadoBolsin {
+    &lt;&lt;entity&gt;&gt;
+    -fechaHoraInicio: LocalDateTime
+    -fechaHoraFin: LocalDateTime
+    +sosActual() boolean
+    +sosEnviado() boolean
+    +setFechaHoraFin(fechaHora: LocalDateTime) void
+  }
+  class CambioEstadoDocumentacion {
+    &lt;&lt;entity&gt;&gt;
+    -fechaHoraInicio: LocalDateTime
+    -fechaHoraFin: LocalDateTime
+    +sosActual() boolean
+    +setFechaHoraFin(fechaHora: LocalDateTime) void
+  }
+  class Estado {
+    &lt;&lt;entity&gt;&gt;
+    -ambito: String
+    -nombre: String
+    -descripcion: String
+    +esAmbitoBolsin() boolean
+    +esAmbitoRemito() boolean
+    +esAmbitoDocumentacion() boolean
+    +esEnviado() boolean
+    +esRecibidoEnCMDestino() boolean
+    +esRecibidoYAceptado() boolean
+    +esRecibidoYAceptadoParcial() boolean
+    +esNoRecibida() boolean
+    +esRecibidoYRechazado() boolean
+    +esParaRedirigir() boolean
+  }
+  class Empleado {
+    &lt;&lt;entity&gt;&gt;
+    -nombre: String
+    -apellido: String
+    -email: String
+    +getCM() ComisionMedica
+  }
+  class ComisionMedica {
+    &lt;&lt;entity&gt;&gt;
+    -codigo: String
+    -nombre: String
+    -email: String
+    -central: boolean
+    +sosVos(otra: ComisionMedica) boolean
+    +esCentral() boolean
+  }
+
+  Bolsin "1" o--> "1..*" Remito : remitos
+  Bolsin "1" *--> "1..*" CambioEstadoBolsin : cambiosEstado
+  Bolsin --> "1" ComisionMedica : origen
+  Bolsin --> "1" ComisionMedica : destino
+  Remito "1" *--> "1..*" DetalleRemito : detalleRemito
+  Remito --> "1" Estado : estado
+  DetalleRemito --> "1" Documentacion : documentacion
+  Documentacion "1" *--> "1..*" CambioEstadoDocumentacion : cambiosEstado
+  CambioEstadoBolsin --> "1" Estado : estado
+  CambioEstadoBolsin --> "1" Empleado : responsable
+  CambioEstadoDocumentacion --> "1" Estado : estado
+  CambioEstadoDocumentacion --> "1" Empleado : responsable
+  Empleado --> "1" ComisionMedica : asignadoA
+</pre>
+</div>
+<p class="titulo-modelo">Figura 1b – Vista estática del CU 28: entidades que colaboran en el registro de la recepción</p>
+</section>
+<p>
+  Las estrategias concretas implementan <code>registrarRecepcion()</code> con la misma firma de la interfaz. Visibilidad: <code>+</code> público, <code>-</code> privado. Se omiten <code>Sesion</code>, <code>Usuario</code> y
+  <code>TipoDocumento</code> porque no participan de la estructura resultante de la aplicación del patrón; los getters
+  simples tampoco se muestran. Las estrategias concretas redefinen los cinco métodos de la interfaz.
+</p>
+
+<!-- ============================ 3. VISTA DINÁMICA ============================ -->
+<section class="apaisada">
+<h2>3. Vista dinámica de la realización de caso de uso de diseño</h2>
+<p>
+  Se modela la parte del escenario que cambia por la aplicación del patrón: desde que el EB selecciona la opción de
+  recepción (paso 8) hasta la actualización de estados (paso 11). El escenario mostrado es el flujo descripto, con la
+  estrategia <code>RecepcionCompleta</code>; con otra opción solo cambia el objeto estrategia que recibe el mensaje
+  <code>registrarRecepcion()</code>.
+</p>
+<div class="diagrama">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor EB as Encargado<br/>de Bolsines
+  participant P as :Pantalla<br/>RegistrarRecepcion
+  participant G as :Gestor<br/>RecepcionBolsin
+  participant E as estrategia:<br/>RecepcionCompleta
+  participant B as seleccionado:<br/>Bolsin
+  participant CB as actual:<br/>CambioEstadoBolsin
+  participant NCB as nuevo:<br/>CambioEstadoBolsin
+  participant R as :Remito
+  participant DR as :DetalleRemito
+  participant D as :Documentacion
+  participant CD as actual:CambioEstado<br/>Documentacion
+  participant NCD as nuevo:CambioEstado<br/>Documentacion
+  participant ES as :Estado
+
+  EB->>P: tomarSeleccionOpcion(opcion)
+  P->>G: tomarSeleccionOpcion(opcion, docs, area)
+  G->>E: esAplicable(bolsin)
+  G->>E: requiereSeleccionDocumentacion()
+  G->>E: requiereAreaDestino()
+  G->>G: setEstrategia(estrategia)
+  G->>E: getDescripcion()
+  G-->>P: pedido de confirmación
+  P-->>EB: pedirConfirmacion()
+  EB->>P: tomarConfirmacion()
+  P->>G: tomarConfirmacion(confirma)
+  G->>G: obtenerFechaYHora()
+  G->>G: buscarEstados()
+  G->>G: actualizarEstados(bolsin, estados)
+  loop Estados [mientras haya estados]
+    G->>ES: esAmbitoBolsin()
+    G->>ES: esRecibidoEnCMDestino()
+  end
+  G->>B: recibir(estado, resp, fh)
+  B->>B: obtenerCambioEstadoActual()
+  B->>CB: setFechaHoraFin(fh)
+  B->>NCB: new(fh, estado, resp)
+  G->>E: registrarRecepcion(bolsin, docs, area, estados, resp, fh)
+  loop Estados [mientras haya estados]
+    E->>ES: esAmbitoRemito()
+    E->>ES: esAmbitoDocumentacion()
+    E->>ES: esRecibidoYAceptado()
+  end
+  E->>B: getRemitos()
+  loop Remitos del bolsín [mientras haya remitos]
+    E->>R: recibir(estRemito, estDocAceptada, docsNovedad, estDocNovedad, area, resp, fh)
+    R->>R: setEstado(estadoRemito)
+    loop Detalles del remito [mientras haya detalles]
+      R->>DR: esDeDocumentacion(numero)
+      R->>DR: actualizarEstadoDocumentacion(est, resp, fh)
+      DR->>D: actualizarEstado(est, resp, fh)
+      D->>D: obtenerCambioEstadoActual()
+      D->>CD: setFechaHoraFin(fh)
+      D->>NCD: new(fh, estado, resp)
+    end
+  end
+  G->>G: notificarRecepcionBolsin(bolsin)
+  G->>G: finCU()
+  G-->>P: resultado de la recepción
+  P-->>EB: informarEjecucion()
+</pre>
+</div>
+<p class="titulo-modelo">Figura 2 – Vista dinámica del rediseño del CU 28 (selección de opción, confirmación y actualización de estados)</p>
+</section>
+<p>Abreviaturas usadas en los mensajes: <code>docs</code> = numerosDocumentacion, <code>area</code> = areaDestino, <code>resp</code> = responsable (Empleado), <code>fh</code> = fechaHora, <code>est</code> = estado. Las firmas completas están en la vista estática.</p>
+<div class="nota">
+  <strong>Decisiones respecto de la realización de análisis:</strong>
+  los mensajes del gestor hacia la pantalla (<code>pedirConfirmacion()</code>, <code>informarEjecucion()</code>, etc.)
+  se resuelven como retorno de los métodos por tratarse de una API REST, igual que en el ejemplo de la cátedra.
+  Los datos del bolsín, sus remitos y las opciones de recepción se devuelven en una única respuesta al seleccionar el bolsín,
+  para no hacer una llamada por remito.
+</div>
+
+<!-- ============================ 4. IMPLEMENTACIÓN ============================ -->
+<h2 class="salto">4. Implementación del rediseño</h2>
+<h3>4.1 Detalles de implementación</h3>
+<table>
+  <tr><th>Lenguaje de programación</th><td>Java 21</td></tr>
+  <tr><th>Framework de programación</th><td>Spring Boot 3.3 (Spring Web para la API REST). Frontend con React 18 y Vite.</td></tr>
+  <tr><th>Tecnología</th><td>Web (cumple el RNF 1 de la ERS)</td></tr>
+  <tr><th>Base de datos</th><td>H2, persistida en archivo (<code>backend/data/bolsines.mv.db</code>)</td></tr>
+  <tr><th>Framework de persistencia</th><td>Spring Data JPA con Hibernate</td></tr>
+</table>
+
+<h3>4.2 Consistencia con el modelado</h3>
+<table>
+  <tr><th>Elemento del modelo</th><th>Implementación</th></tr>
+  <tr><td>«boundary» PantallaRegistrarRecepcion</td><td><code>boundary/PantallaRegistrarRecepcion.java</code> (controller REST, punto de entrada) y la interfaz React (<code>frontend/src/App.jsx</code>)</td></tr>
+  <tr><td>«control» GestorRecepcionBolsin (Context)</td><td><code>control/GestorRecepcionBolsin.java</code> (servicio)</td></tr>
+  <tr><td>Strategy y estrategias concretas</td><td>paquete <code>strategy/</code></td></tr>
+  <tr><td>«entity» del dominio</td><td>paquete <code>entity/</code>, mapeadas con JPA</td></tr>
+  <tr><td>CU 29 Notificar recepción de bolsín (include)</td><td><code>boundary/InterfazEmail.java</code>: el envío se simula, el e-mail se muestra en pantalla y en el log</td></tr>
+</table>
+<p>
+  El gestor no devuelve entidades a la pantalla: arma representaciones con datos primitivos (DTO). Las entidades colaboran
+  entre sí aplicando Experto: por ejemplo el gestor pregunta <code>bolsin.sosEnviado()</code> y es el bolsín quien consulta
+  a su cambio de estado actual, que a su vez le pregunta al <code>Estado</code>.
+</p>
+
+<h3>4.3 Flujos que se pueden ejecutar</h3>
+<table>
+  <tr><th>Flujo</th><th>Cómo demostrarlo</th></tr>
+  <tr><td>Flujo descripto</td><td>Usuario <code>lgomez</code> (CM Córdoba) → bolsín 1 → opción 1 → Confirmar</td></tr>
+  <tr><td>A1: precinto inexistente</td><td>Filtrar por precinto <code>999999</code></td></tr>
+  <tr><td>A2: CM de origen inexistente</td><td>Filtrar por CM de origen <code>Salta</code></td></tr>
+  <tr><td>A3: no se recibe toda la documentación</td><td>Bolsín 2 → opción 2 → marcar la documentación faltante</td></tr>
+  <tr><td>A4: documentación que no corresponde</td><td>Bolsín 3 → opción 3 → marcar la documentación</td></tr>
+  <tr><td>A5: redirigir a otra área</td><td>Usuario <code>mperez</code> (CMC) → bolsín 5 → opción 4 → indicar área</td></tr>
+  <tr><td>A6: el EB no confirma</td><td>"No confirmar" en el diálogo de confirmación</td></tr>
+  <tr><td>Obs. 1: cancelar el CU</td><td>Botón Cancelar, disponible en todos los pasos</td></tr>
+</table>
+<div class="nota">
+  <strong>Supuestos de implementación:</strong> (1) la ERS no indica el estado del remito cuando hay documentación
+  rechazada (opción 3); se adoptó <em>Recibido y Aceptado Parcial</em>, por analogía con la opción 2.
+  (2) No se implementa el inicio de sesión (CU 5): la base tiene una sesión activa y un selector permite cambiar de usuario para la demostración.
+</div>
+
+<!-- ============================ 5. UX ============================ -->
+<h2 class="salto">5. Diseño de las interfaces de usuario</h2>
+<p>Las pantallas del CU 28 se diseñaron para el actor Encargado de Bolsines aplicando los siguientes patrones de diseño de GUI.</p>
+<h3>5.1 Patrones de GUI aplicados</h3>
+<table>
+  <tr><th>Patrón de diseño de GUI</th><th>Dónde se aplica</th><th>Necesidad del usuario</th></tr>
+  <tr><td>Asistente / indicador de pasos (Wizard)</td><td>Barra de pasos: Bolsín → Contenido y situación → Confirmación → Resultado</td><td>Saber siempre dónde está y cuánto falta</td></tr>
+  <tr><td>Migas de pan (Breadcrumbs)</td><td>Inicio › Bolsines › Registrar recepción de bolsín</td><td>Ubicación dentro del sistema</td></tr>
+  <tr><td>Listado con filtros (List builder / Filter)</td><td>Bolsines pendientes, filtro por precinto y CM de origen</td><td>Encontrar rápido el bolsín que tiene en la mano</td></tr>
+  <tr><td>Maestro–detalle</td><td>Al seleccionar un bolsín se muestran sus remitos y documentación agrupados</td><td>Comparar contra el contenido físico</td></tr>
+  <tr><td>Revelación progresiva</td><td>Las casillas de documentación y el campo "Área" aparecen solo si la opción elegida los necesita</td><td>No abrumar; pedir solo lo necesario</td></tr>
+  <tr><td>Diálogo modal de confirmación</td><td>Antes de registrar, con resumen de la situación elegida</td><td>Evitar errores irreversibles</td></tr>
+  <tr><td>Prevención de errores</td><td>Opción 4 deshabilitada si la CM no es la Central; botón "Registrar" inactivo hasta completar lo requerido</td><td>No poder equivocarse</td></tr>
+  <tr><td>Retroalimentación y estado vacío</td><td>Mensajes en línea para A1/A2, pantalla "no hay bolsines", resultado con estados por color</td><td>Entender qué pasó y qué hacer después</td></tr>
+  <tr><td>Salida de emergencia</td><td>Botón Cancelar visible en todos los pasos (Observación 1 del CU)</td><td>Control y libertad</td></tr>
+</table>
+
+<h3>5.2 Pantallas del caso de uso</h3>
+<div class="grilla capturas">
+  <figure><img src="img/1-listado.jpg" alt="Paso 1 – Bolsines pendientes de recepción, con filtro por precinto y CM de origen"><figcaption>Paso 1 – Bolsines pendientes de recepción, con filtro por precinto y CM de origen</figcaption></figure>
+  <figure><img src="img/2-contenido.jpg" alt="Paso 2 – Contenido del bolsín y selección de la situación de recepción"><figcaption>Paso 2 – Contenido del bolsín y selección de la situación de recepción</figcaption></figure>
+  <figure><img src="img/3-confirmacion.jpg" alt="Paso 3 – Pedido de confirmación"><figcaption>Paso 3 – Pedido de confirmación</figcaption></figure>
+  <figure><img src="img/4-resultado.jpg" alt="Paso 4 – Resultado: estados actualizados y notificación enviada"><figcaption>Paso 4 – Resultado: estados actualizados y notificación enviada</figcaption></figure>
+</div>
+<p class="titulo-modelo">Figura 3 – Pantallas del CU 28 Registrar recepción de bolsín (capturas de la aplicación en ejecución)</p>
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, theme: 'neutral', themeVariables: { fontSize: '15px' }, sequence: { useMaxWidth: true, actorMargin: 18, width: 118, messageMargin: 26, boxMargin: 6, mirrorActors: false }, class: { useMaxWidth: true } });
+  // Se dibuja un diagrama por vez para que no se superpongan al exportar a PDF.
+  for (const nodo of document.querySelectorAll('.mermaid')) {
+    await mermaid.run({ nodes: [nodo] });
+    // El SVG se reemplaza por una imagen vectorial: así cada diagrama se imprime en su propia hoja.
+    const svg = nodo.querySelector('svg');
+    if (svg) {
+      const [, , ancho, alto] = svg.getAttribute('viewBox').split(/\s+/).map(Number);
+      svg.setAttribute('width', ancho);
+      svg.setAttribute('height', alto);
+      svg.removeAttribute('style');
+      const img = new Image();
+      img.alt = 'Diagrama UML';
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+      await img.decode().catch(() => {});
+      nodo.replaceChildren(img);
+    }
+  }
+</script>
+</body>
+</html>

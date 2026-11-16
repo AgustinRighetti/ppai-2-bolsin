@@ -1,0 +1,28 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "/Users/agustinrighetti/Utn/DSI/PPAI-2-BOLSIN/frontend",
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5180",
+        "--directory",
+        "/Users/agustinrighetti/Utn/DSI/PPAI-2-BOLSIN/docs"
+      ],
+      "port": 5180
+    }
+  ]
+}
