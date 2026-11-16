@@ -43,9 +43,10 @@ Usuarios de prueba (se cambian desde el selector "Usuario logueado", abajo en el
 
 | Usuario | Comisión médica | Sirve para mostrar |
 |---|---|---|
-| `lgomez` | CM Córdoba | Flujo principal y alternativos A1, A2, A3, A4, A6 (bolsines 1, 2 y 3) |
-| `mperez` | Comisión Médica Central | A5: redirigir a otra área (bolsines 4 y 5) |
-| `rdiaz` | CM Mendoza | Sin bolsines enviados para la CM |
+| `lgomez` | CM Córdoba | Flujo principal y alternativos A1, A2, A3, A4, A6 (bolsines 1, 2, 3, 7 y 8) |
+| `mperez` | Comisión Médica Central | A5: redirigir a otra área (bolsines 4, 5, 9 y 10) |
+| `rdiaz` | CM Mendoza | Bolsines 11 y 12 (opción 4 deshabilitada: no es la Central) |
+| `dsosa` | CM Rosario | Sin bolsines enviados para la CM (pantalla vacía) |
 
 1. **Flujo principal**: Registrar recepción → bolsín 1 → "El contenido del bolsín es igual al registrado" → Confirmar.
 2. **A1 / A2**: filtrar por precinto `999999` o por CM de origen `Salta`.

@@ -124,6 +124,7 @@ public class DatosIniciales implements CommandLineRunner {
         Usuario uLaura = usuarios.save(new Usuario("lgomez", "1234", laura));
         usuarios.save(new Usuario("mperez", "1234", martin));
         usuarios.save(new Usuario("rdiaz", "1234", rocio));
+        usuarios.save(new Usuario("dsosa", "1234", diego));
         sesiones.save(new Sesion(LocalDateTime.now(), uLaura));
 
         // Bolsines enviados a CM Córdoba
@@ -169,6 +170,54 @@ public class DatosIniciales implements CommandLineRunner {
         Remito r8 = remito(b6, "EnBolsinSaliente");
         doc(r8, "Expediente 6001/26 - Accidente in itinere", expediente, diego);
         bolsines.save(b6);
+
+        // Más bolsines enviados a CM Córdoba
+        Bolsin b7 = bolsin(7, 1120, "100455", villaMaria, cordoba, Estado.ENVIADO, diego);
+        Remito r9 = remito(b7, Estado.EN_BOLSIN_ENVIADO);
+        doc(r9, "Expediente 7015/26 - Hipoacusia laboral", expediente, diego);
+        doc(r9, "Audiometría tonal - Paciente Benítez", estudio, diego);
+        Remito r10 = remito(b7, Estado.EN_BOLSIN_ENVIADO);
+        doc(r10, "Dictamen médico - Paciente Benítez", dictamen, diego);
+        doc(r10, "Carta documento - ART La Segunda", carta, diego);
+        bolsines.save(b7);
+
+        Bolsin b8 = bolsin(8, 760, "100512", rosario, cordoba, Estado.ENVIADO, diego);
+        Remito r11 = remito(b8, Estado.EN_BOLSIN_ENVIADO);
+        doc(r11, "Expediente 4688/26 - Lumbalgia crónica", expediente, diego);
+        doc(r11, "Tomografía lumbar - Paciente Acosta", estudio, diego);
+        bolsines.save(b8);
+
+        // Más bolsines enviados a la Comisión Médica Central
+        Bolsin b9 = bolsin(9, 1890, "300530", mendoza, central, Estado.ENVIADO, rocio);
+        Remito r12 = remito(b9, Estado.EN_BOLSIN_ENVIADO);
+        doc(r12, "Recurso de apelación - Expediente 3402/26", expediente, rocio);
+        doc(r12, "Dictamen médico - Paciente Quiroga", dictamen, rocio);
+        Remito r13 = remito(b9, Estado.EN_BOLSIN_ENVIADO);
+        doc(r13, "Nota para Gerencia de Prestaciones", carta, rocio);
+        doc(r13, "Ecografía de hombro - Paciente Quiroga", estudio, rocio);
+        doc(r13, "Informe pericial - Expediente 3402/26", dictamen, rocio);
+        bolsines.save(b9);
+
+        Bolsin b10 = bolsin(10, 520, "300618", villaMaria, central, Estado.ENVIADO, diego);
+        Remito r14 = remito(b10, Estado.EN_BOLSIN_ENVIADO);
+        doc(r14, "Expediente 7120/26 - Elevación por divergencia", expediente, diego);
+        doc(r14, "Carta documento - Trabajador Medina", carta, diego);
+        bolsines.save(b10);
+
+        // Bolsines enviados a CM Mendoza
+        Bolsin b11 = bolsin(11, 940, "500210", cordoba, mendoza, Estado.ENVIADO, laura);
+        Remito r15 = remito(b11, Estado.EN_BOLSIN_ENVIADO);
+        doc(r15, "Expediente 1990/26 - Traslado de trámite", expediente, laura);
+        doc(r15, "Dictamen médico - Paciente Luna", dictamen, laura);
+        bolsines.save(b11);
+
+        Bolsin b12 = bolsin(12, 1310, "500347", central, mendoza, Estado.ENVIADO, martin);
+        Remito r16 = remito(b12, Estado.EN_BOLSIN_ENVIADO);
+        doc(r16, "Resolución de apelación - Expediente 2210/25", expediente, martin);
+        Remito r17 = remito(b12, Estado.EN_BOLSIN_ENVIADO);
+        doc(r17, "Estudio de capacidad laboral - Paciente Videla", estudio, martin);
+        doc(r17, "Carta documento - Empleador Bodegas Andinas", carta, martin);
+        bolsines.save(b12);
     }
 
     private void estado(String ambito, String nombre, String descripcion) {

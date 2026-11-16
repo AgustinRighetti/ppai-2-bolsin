@@ -61,7 +61,7 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 
 - Si la base quedó con el esquema viejo (versión Strategy), borrar `backend/data/`; se recrea sola.
 - Si `mvn spring-boot:run` falla con "Process terminated with exit code 1", el puerto 8080 está ocupado: `lsof -ti tcp:8080 | xargs kill`.
-- Usuarios de demo (selector "Usuario logueado", abajo en el menú lateral): `lgomez` (CM Córdoba, bolsines 1–3), `mperez` (Central, bolsines 4–5), `rdiaz` (Mendoza, sin bolsines).
+- Usuarios de demo (selector "Usuario logueado", abajo en el menú lateral): `lgomez` (CM Córdoba, bolsines 1, 2, 3, 7 y 8), `mperez` (Central, bolsines 4, 5, 9 y 10), `rdiaz` (Mendoza, bolsines 11 y 12), `dsosa` (Rosario, sin bolsines).
 - Consola de la base: http://localhost:8080/h2-console, URL `jdbc:h2:file:./data/bolsines`, usuario `sa`, sin contraseña.
 
 ## Cómo regenerar el PDF
