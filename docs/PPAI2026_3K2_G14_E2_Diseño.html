@@ -47,7 +47,12 @@
   @media print {
     @page apaisada { size: A4 landscape; margin: 10mm; }
     .apaisada .diagrama { border: 0; padding: 0; }
-    .apaisada .diagrama img { max-width: 100%; max-height: 125mm; width: auto; height: auto; }
+    .apaisada .diagrama img { max-width: 100%; max-height: 158mm; width: auto; height: auto; }
+    .apaisada.con-notas .diagrama img { max-height: 104mm; }
+    .apaisada .leyenda { font-size: 8.5pt; margin: 2mm 0 0; }
+    .apaisada .nota { font-size: 8.5pt; margin: 2mm 0 0; padding: 2mm 3mm; }
+    .vertical .diagrama { border: 0; padding: 0; margin: 2mm 0; }
+    .vertical .diagrama img { max-width: 100%; max-height: 200mm; width: auto; height: auto; }
     .apaisada h2 { margin-top: 0; }
     .apaisada .titulo-modelo { margin-bottom: 0; }
     h1 { margin: 2mm 0 1mm; font-size: 19pt; }
@@ -152,7 +157,7 @@
   de estados no se rediseñan en este caso de uso.
 </p>
 
-<section class="apaisada">
+<section class="vertical">
 <h3>1.3 Máquina de estados de Documentación</h3>
 <p>
   Respecto de la Entrega 1 se agrega la transición <em>Recibida y rechazada → Registrada</em>: según la regla de
@@ -162,7 +167,7 @@
 <div class="diagrama">
 <pre class="mermaid">
 stateDiagram-v2
-  direction LR
+  direction TB
   [*] --> Registrada : CU7 Registrar documentación / new()
   Registrada --> EnRemito : CU15 Generar remito / asignarARemito()
   EnRemito --> Registrada : CU17 Cancelar remito / cancelarRemito()
@@ -317,7 +322,7 @@ classDiagram
 <div class="diagrama">
 <pre class="mermaid">
 classDiagram
-  direction LR
+  direction TB
   class PantallaRegistrarRecepcion {
     &lt;&lt;boundary&gt;&gt;
     -gestor: GestorRecepcionBolsin
@@ -450,18 +455,19 @@ classDiagram
 </pre>
 </div>
 <p class="titulo-modelo">Figura 2b – Vista estática del CU 28: clases de interfaz, control y entidades que colaboran con el patrón</p>
-</section>
-<p>
+<p class="leyenda">
   Visibilidad: <code>+</code> público, <code>-</code> privado, <code>#</code> protegido; métodos en cursiva o con
   <code>*</code>: abstractos; subrayados o con <code>$</code>: estáticos. En las clases de estado concreto
-  <code>(...)</code> abrevia la firma <code>(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime)</code>
+  <code>(doc, resp, fh)</code> abrevia la firma <code>(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime)</code>
   heredada de <code>EstadoDocumentacion</code>; cada una redefine solo las transiciones que salen de ella. Todas
   redefinen además <code>getNombre()</code> y <code>getDescripcion()</code>. Se omiten <code>Sesion</code>,
   <code>Usuario</code>, <code>TipoDocumento</code> y los getters simples.
 </p>
+</section>
+
 
 <!-- ============================ 3. VISTA DINÁMICA ============================ -->
-<section class="apaisada">
+<section class="apaisada con-notas">
 <h2>3. Vista dinámica de la realización de caso de uso de diseño</h2>
 <p>
   Se modela la parte del escenario que cambia por la aplicación del patrón: desde que el EB confirma la opción de
@@ -522,8 +528,7 @@ sequenceDiagram
 </pre>
 </div>
 <p class="titulo-modelo">Figura 3 – Vista dinámica del rediseño del CU 28 con el patrón State (confirmación y actualización de estados)</p>
-</section>
-<p>
+<p class="leyenda">
   Abreviaturas usadas en los mensajes: <code>docs</code> = numerosDocumentacion, <code>area</code> = areaDestino,
   <code>resp</code> = responsable (Empleado), <code>fh</code> = fechaHora, <code>siguiente</code> = estado nuevo creado.
   Las firmas completas están en la vista estática.
@@ -536,6 +541,8 @@ sequenceDiagram
   <code>informarEjecucion()</code>, etc.) se resuelven como retorno de los métodos por tratarse de una API REST, igual
   que en el ejemplo de la cátedra.
 </div>
+</section>
+
 
 <!-- ============================ 4. IMPLEMENTACIÓN ============================ -->
 <h2 class="salto">4. Implementación del rediseño</h2>
@@ -591,7 +598,7 @@ sequenceDiagram
 </div>
 
 <!-- ============================ 5. UX ============================ -->
-<h2 class="salto">5. Diseño de las interfaces de usuario</h2>
+<h2>5. Diseño de las interfaces de usuario</h2>
 <p>Las pantallas del CU 28 se diseñaron para el actor Encargado de Bolsines aplicando los siguientes patrones de diseño de GUI.</p>
 <h3>5.1 Patrones de GUI aplicados</h3>
 <table>
