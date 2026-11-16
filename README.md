@@ -39,7 +39,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21 && export PATH=$JAVA_HOME/bin:$PAT
 
 ## Guion para la defensa
 
-Usuarios de prueba (se cambian desde el selector de arriba a la derecha; simula el inicio de sesión):
+Usuarios de prueba (se cambian desde el selector "Usuario logueado", abajo en el menú lateral; simula el inicio de sesión):
 
 | Usuario | Comisión médica | Sirve para mostrar |
 |---|---|---|
@@ -55,7 +55,7 @@ Usuarios de prueba (se cambian desde el selector de arriba a la derecha; simula 
 6. **A5**: cambiar a `mperez` → bolsín 5 → "La documentación se debe redirigir a otra área".
 7. **Persistencia**: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/bolsines`, usuario `sa`, sin contraseña).
    Consultas útiles: `SELECT * FROM CAMBIO_ESTADO_BOLSIN`, `SELECT * FROM CAMBIO_ESTADO_DOCUMENTACION`, `SELECT * FROM REMITO`.
-8. "Volver a cargar los datos de prueba" (pantalla de inicio) deja la base como al principio.
+8. "Volver a cargar los datos de prueba" (abajo en el menú lateral) deja la base como al principio.
 
 Los e-mails del CU 29 se simulan: se muestran en la pantalla de resultado y se escriben en el log del backend.
 
