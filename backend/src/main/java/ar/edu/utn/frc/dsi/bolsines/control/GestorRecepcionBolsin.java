@@ -103,8 +103,7 @@ public class GestorRecepcionBolsin {
     }
 
     private BolsinResponse mostrarDatosBolsin(Bolsin bolsin) {
-        return new BolsinResponse(bolsin.getNumeroBolsin(), bolsin.getNombreCMOrigen(), bolsin.getNumeroPrecinto(),
-                bolsin.getDescripcionEstadoActual());
+        return new BolsinResponse(bolsin.getNumeroBolsin(), bolsin.getNombreCMOrigen(), bolsin.getNumeroPrecinto());
     }
 
     /** Filtro del listado por número de precinto y/o CM origen (flujos alternativos A1 y A2). */
@@ -150,7 +149,6 @@ public class GestorRecepcionBolsin {
                 bolsin.getNumeroBolsin(),
                 bolsin.getNombreCMOrigen(),
                 bolsin.getNumeroPrecinto(),
-                bolsin.getDescripcionEstadoActual(),
                 buscarRemitos(bolsin),
                 buscarOpcionesRecepcion(bolsin));
     }
@@ -243,11 +241,9 @@ public class GestorRecepcionBolsin {
             this.areaDestino = null;
             return new ResultadoRecepcionResponse(false,
                     "No se registró la recepción. Puede seleccionar nuevamente la opción de recepción.",
-                    bolsin.getNumeroBolsin(), bolsin.getDescripcionEstadoActual(), bolsin.getDescripcionEstadoActual(),
-                    null, null, List.of(), List.of());
+                    bolsin.getNumeroBolsin(), bolsin.getNombreEstadoActual(), null, null, List.of(), List.of());
         }
 
-        String estadoAnterior = bolsin.getDescripcionEstadoActual();
         obtenerFechaYHora();
         List<Estado> estados = buscarEstados();
         actualizarEstados(bolsin, estados);
@@ -256,8 +252,7 @@ public class GestorRecepcionBolsin {
 
         ResultadoRecepcionResponse resultado = new ResultadoRecepcionResponse(true,
                 "La recepción del bolsín N° " + bolsin.getNumeroBolsin() + " se registró con éxito.",
-                bolsin.getNumeroBolsin(), estadoAnterior, bolsin.getDescripcionEstadoActual(),
-                empleadoLogueado.getNombreCompleto(),
+                bolsin.getNumeroBolsin(), bolsin.getNombreEstadoActual(), empleadoLogueado.getNombreCompleto(),
                 fechaHoraActual.format(FORMATO_FECHA_HORA), buscarRemitos(bolsin), notificaciones);
         finCU();
         return resultado;

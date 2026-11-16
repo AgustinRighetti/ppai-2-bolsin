@@ -28,7 +28,7 @@ public final class Dtos {
     }
 
     // ---- Responses ----
-    public record BolsinResponse(Integer numeroBolsin, String cmOrigen, String numeroPrecinto, String estado) {
+    public record BolsinResponse(Integer numeroBolsin, String cmOrigen, String numeroPrecinto) {
     }
 
     public record InicioResponse(String usuario, String empleado, String comisionMedica, boolean esCentral,
@@ -46,7 +46,7 @@ public final class Dtos {
                                           boolean requiereAreaDestino, boolean habilitada) {
     }
 
-    public record DetalleBolsinResponse(Integer numeroBolsin, String cmOrigen, String numeroPrecinto, String estado,
+    public record DetalleBolsinResponse(Integer numeroBolsin, String cmOrigen, String numeroPrecinto,
                                         List<RemitoResponse> remitos, List<OpcionRecepcionResponse> opciones) {
     }
 
@@ -58,7 +58,7 @@ public final class Dtos {
     }
 
     public record ResultadoRecepcionResponse(boolean registrado, String mensaje, Integer numeroBolsin,
-                                             String estadoAnteriorBolsin, String estadoBolsin, String responsable, String fechaHora,
+                                             String estadoBolsin, String responsable, String fechaHora,
                                              List<RemitoResponse> remitos, List<NotificacionResponse> notificaciones) {
     }
 

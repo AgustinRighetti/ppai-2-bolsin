@@ -375,7 +375,6 @@ export default function App() {
                               <small>Comisión médica de origen</small>
                               {b.cmOrigen}
                             </span>
-                            <span className="estado transito">{b.estado}</span>
                             <Precinto numero={b.numeroPrecinto} />
                             <span className="bolsin-accion">Seleccionar →</span>
                           </button>
@@ -404,10 +403,7 @@ export default function App() {
                 <div className="hoja-cabecera">
                   <div>
                     <p className="sobretitulo">Paso 2 de 4</p>
-                    <h1 className="titulo-con-estado">
-                      Bolsín #{detalle.numeroBolsin}
-                      <span className="estado transito">{detalle.estado}</span>
-                    </h1>
+                    <h1>Bolsín #{detalle.numeroBolsin}</h1>
                     <p className="sub">
                       Desde <strong>{detalle.cmOrigen}</strong>
                     </p>
@@ -532,23 +528,13 @@ export default function App() {
                 <div>
                   <h1>{resultado.mensaje}</h1>
                   <p className="sub">
-                    Responsable <strong>{resultado.responsable}</strong> ·{' '}
-                    <span className="mono">{resultado.fechaHora}</span>
+                    Bolsín en estado <strong>Recibido en CM destino</strong> · Responsable{' '}
+                    <strong>{resultado.responsable}</strong> · <span className="mono">{resultado.fechaHora}</span>
                   </p>
                 </div>
               </div>
 
               <h2 className="titulo-seccion">Cambios de estado registrados</h2>
-              <div className="bolsin-transicion">
-                <span>
-                  Bolsín <strong className="mono">#{resultado.numeroBolsin}</strong>
-                </span>
-                <span className="transicion">
-                  <span className="estado previo">{resultado.estadoAnteriorBolsin}</span>
-                  <span className="flechita" aria-label="pasa a">→</span>
-                  <span className="estado bueno">{resultado.estadoBolsin}</span>
-                </span>
-              </div>
               {resultado.remitos.map((remito) => (
                 <div className="remito" key={remito.numeroRemito}>
                   <div className="remito-cabecera">
