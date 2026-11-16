@@ -114,6 +114,11 @@ public class Bolsin {
         return actual == null ? null : actual.getNombreEstado();
     }
 
+    public String getDescripcionEstadoActual() {
+        CambioEstadoBolsin actual = obtenerCambioEstadoActual();
+        return actual == null ? null : actual.getDescripcionEstado();
+    }
+
     public String getNombreCMOrigen() {
         return origen.getNombre();
     }

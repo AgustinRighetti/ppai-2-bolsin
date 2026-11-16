@@ -46,6 +46,10 @@ public class CambioEstadoBolsin {
         return estado.getNombre();
     }
 
+    public String getDescripcionEstado() {
+        return estado.getDescripcion();
+    }
+
     public Estado getEstado() {
         return estado;
     }
