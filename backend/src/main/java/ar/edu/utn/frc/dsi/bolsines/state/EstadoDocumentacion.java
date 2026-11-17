@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
  *
  * El contexto (Documentacion) no pregunta en qué estado está: delega el evento en su estado actual.
  */
+// DEFENSA (4. State - STATE): clase abstracta, un método por cada evento de la máquina de estados.
+// Todos lanzan excepción por defecto; cada estado concreto redefine solo las transiciones que salen
+// de él. Así no hay ningún if/switch preguntando por el estado.
 public abstract class EstadoDocumentacion {
 
     public abstract String getNombre();
@@ -50,6 +53,9 @@ public abstract class EstadoDocumentacion {
     }
 
     /** CU 28 Registrar recepción de bolsín (contenido igual) / CU 31 (área acepta). */
+    // DEFENSA (4. State): versión POR DEFECTO, lanza excepción porque la transición no está permitida.
+    // Ej.: aceptar una documentación Registrada -> Registrada no redefine aceptar -> se ejecuta esta
+    // -> error (HTTP 409). Solo EnBolsinEnviado y ParaRedirigir la redefinen.
     public void aceptar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
         throw transicionInvalida("aceptar");
     }
@@ -109,6 +115,9 @@ public abstract class EstadoDocumentacion {
      * Pasos comunes a toda transición: cierra el cambio de estado vigente, crea el nuevo cambio de
      * estado con el empleado responsable y deja al estado siguiente como estado actual del contexto.
      */
+    // DEFENSA (4. State): cambia el estado de la documentación. 1) cierra el cambio de estado vigente
+    // (fecha fin), 2) crea el CambioEstadoDocumentacion nuevo con responsable y fecha (trazabilidad),
+    // 3) setea el estado siguiente en el contexto. Protected: solo lo usan los estados concretos.
     protected void cambiarEstado(Documentacion documentacion, EstadoDocumentacion siguiente,
                                  Empleado responsable, LocalDateTime fechaHora) {
         CambioEstadoDocumentacion actual = documentacion.obtenerCambioEstadoActual();

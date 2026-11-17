@@ -41,6 +41,8 @@ public class Documentacion {
     private TipoDocumento tipoDocumento;
     @ManyToOne(optional = false)
     private ComisionMedica comisionMedicaOrigen;
+    // DEFENSA (4. State - CONTEXT): referencia al estado actual. Es un objeto de una de las 9 clases
+    // concretas; el converter lo guarda en la base por su nombre.
     @Convert(converter = EstadoDocumentacionConverter.class)
     private EstadoDocumentacion estadoActual;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -85,6 +87,8 @@ public class Documentacion {
         estadoActual.registrarRetiro(this, responsable, fechaHora);
     }
 
+    // DEFENSA (4. State - CONTEXT): una sola línea. No pregunta en qué estado está: le DELEGA el
+    // evento a su estado actual y se pasa a sí misma (this) para que el estado le pueda cambiar el estado.
     public void aceptar(Empleado responsable, LocalDateTime fechaHora) {
         estadoActual.aceptar(this, responsable, fechaHora);
     }

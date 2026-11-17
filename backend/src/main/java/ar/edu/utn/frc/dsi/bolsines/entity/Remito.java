@@ -59,6 +59,10 @@ public class Remito {
      * Luego el remito queda Recibido y Aceptado o, si alguna documentación quedó no recibida o
      * rechazada, Recibido y Aceptado Parcial.
      */
+    // DEFENSA (3. Dónde aparece el patrón): el remito le manda a cada documentación un EVENTO según
+    // la opción: aceptar, noRecibir, rechazar o redirigir. No sabe en qué estado está la documentación
+    // ni a cuál va a pasar: eso lo resuelve el State. (El switch es sobre la OPCIÓN elegida, no sobre
+    // el estado.)
     public void registrarRecepcion(SituacionRecepcion situacion, List<Integer> numerosDocConNovedad,
                                    String areaCMCDestino, Estado estadoAceptado, Estado estadoAceptadoParcial,
                                    Empleado responsable, LocalDateTime fechaHora) {

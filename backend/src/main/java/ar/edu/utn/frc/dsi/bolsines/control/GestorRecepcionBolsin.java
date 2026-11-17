@@ -40,6 +40,9 @@ import java.util.function.Predicate;
  * Coordina el caso de uso y envía los mensajes de recepción a las entidades. No decide a qué
  * estado pasa cada documentación: eso lo resuelve el patrón State dentro de Documentacion.
  */
+// DEFENSA (1. Arquitectura): este es el CONTROL. Coordina el caso de uso y recuerda lo que se va
+// eligiendo (atributos de abajo). Las entidades (Bolsin, Remito, DetalleRemito, Documentacion)
+// responden sobre sus propios datos: patrón Experto.
 @Service
 public class GestorRecepcionBolsin {
 
@@ -69,6 +72,8 @@ public class GestorRecepcionBolsin {
 
     // ------------------------------------------------------------------ Pasos 1 a 4
 
+    // DEFENSA (2. Recorrido): inicio del CU. Busca la CM del empleado logueado y los bolsines
+    // ENVIADOS a esa CM. Al bolsín se le pregunta (esTuCMDestino, sosEnviado): Experto.
     @Transactional(readOnly = true)
     public InicioResponse nuevaRecepcionBolsin() {
         limpiarSeleccion();
@@ -228,6 +233,9 @@ public class GestorRecepcionBolsin {
 
     // ------------------------------------------------------------------ Pasos 10 a 12
 
+    // DEFENSA (2. Recorrido): el EB confirma. Recién acá se guarda algo; los pasos anteriores solo
+    // consultan y recuerdan. Si no confirma (A6) se descarta la opción. Si confirma:
+    // fecha/hora -> estados -> actualizarEstados (bolsín + remitos) -> save -> mail -> finCU.
     @Transactional
     public ResultadoRecepcionResponse tomarConfirmacion(boolean confirma) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
@@ -270,6 +278,8 @@ public class GestorRecepcionBolsin {
      * El bolsín pasa a Recibido en CM destino y cada remito registra la recepción de su
      * documentación. Los cambios de estado de la documentación los resuelve el patrón State.
      */
+    // DEFENSA (2. Recorrido): 1) el bolsín pasa a "Recibido en CM destino" (SIN State, con Estado y
+    // CambioEstadoBolsin); 2) a cada remito le pide registrarRecepcion -> ahí empieza el State.
     private void actualizarEstados(Bolsin bolsin, List<Estado> estados) {
         Estado recibidoEnCMDestino = buscarEstado(estados, e -> e.esAmbitoBolsin() && e.esRecibidoEnCMDestino());
         Estado remitoAceptado = buscarEstado(estados, e -> e.esAmbitoRemito() && e.esRecibidoYAceptado());

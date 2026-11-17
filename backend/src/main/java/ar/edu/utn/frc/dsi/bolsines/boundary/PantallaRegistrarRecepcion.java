@@ -24,6 +24,8 @@ import java.util.List;
  * Los mensajes Gestor -> Pantalla de la realización (mostrarDatosBolsin, pedirSeleccionOpcion,
  * pedirConfirmacion, informarEjecucion) viajan como retorno de cada método, por ser una API REST.
  */
+// DEFENSA (1. Arquitectura): esta es la BOUNDARY. Recibe los pedidos de la pantalla React y se los
+// pasa al gestor, no tiene lógica. Separación boundary / control / entidades, igual que en el diseño.
 @RestController
 @RequestMapping("/api/recepcion-bolsin")
 public class PantallaRegistrarRecepcion {
