@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { api } from './api.js'
 
 const PASOS = ['Bolsín', 'Contenido y situación', 'Confirmación', 'Resultado']
-const ESTADO_PREVIO_DOCUMENTACION = 'En bolsín enviado'
 
 // Qué se marca en el listado según la opción de recepción elegida (palabras de la ERS)
 const MARCADO_POR_OPCION = {
@@ -553,11 +552,7 @@ export default function App() {
                               {doc.areaDestino ? ` · Área: ${doc.areaDestino}` : ''}
                             </small>
                           </span>
-                          <span className="transicion">
-                            <span className="estado previo">{ESTADO_PREVIO_DOCUMENTACION}</span>
-                            <span className="flechita" aria-label="pasa a">→</span>
-                            <span className={`estado ${claseEstado(doc.estado)}`}>{doc.estado}</span>
-                          </span>
+                          <span className={`estado ${claseEstado(doc.estado)}`}>{doc.estado}</span>
                         </div>
                       </li>
                     ))}
