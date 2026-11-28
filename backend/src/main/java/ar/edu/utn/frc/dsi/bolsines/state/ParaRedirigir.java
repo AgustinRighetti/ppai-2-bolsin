@@ -5,6 +5,7 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** <<ConcreteState>> Recibida en la CMC, pendiente de entrega interna a otra área. */
 public class ParaRedirigir extends EstadoDocumentacion {
@@ -23,23 +24,33 @@ public class ParaRedirigir extends EstadoDocumentacion {
 
     /** CU 31 [es correcta]: Para redirigir -> Recibida y aceptada. */
     @Override
-    public void aceptar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void aceptar(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                        Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new RecibidaYAceptada();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoRecibidaYAceptada();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
     }
 
     /** CU 31 [no es correcta]: Para redirigir -> Recibida y rechazada. */
     @Override
-    public void rechazar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void rechazar(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                         Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new RecibidaYRechazada();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoRecibidaYRechazada();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
+    }
+
+    private EstadoDocumentacion crearEstadoRecibidaYAceptada() {
+        return new RecibidaYAceptada();
+    }
+
+    private EstadoDocumentacion crearEstadoRecibidaYRechazada() {
+        return new RecibidaYRechazada();
     }
 }

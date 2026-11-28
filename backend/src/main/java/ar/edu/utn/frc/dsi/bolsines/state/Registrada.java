@@ -5,6 +5,7 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** <<ConcreteState>> Documentación registrada, disponible para incluir en un remito. */
 public class Registrada extends EstadoDocumentacion {
@@ -23,23 +24,33 @@ public class Registrada extends EstadoDocumentacion {
 
     /** CU 15 Generar remito: Registrada -> En remito. */
     @Override
-    public void asignarARemito(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void asignarARemito(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                               Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new EnRemito();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoEnRemito();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
     }
 
     /** CU 9 Eliminar documentación: Registrada -> De baja. */
     @Override
-    public void darDeBaja(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void darDeBaja(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                          Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new DeBaja();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoDeBaja();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
+    }
+
+    private EstadoDocumentacion crearEstadoEnRemito() {
+        return new EnRemito();
+    }
+
+    private EstadoDocumentacion crearEstadoDeBaja() {
+        return new DeBaja();
     }
 }

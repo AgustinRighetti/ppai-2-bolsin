@@ -48,8 +48,8 @@ class MaquinaEstadosDocumentacionTest {
         assertEquals(5, documentacion.getCambiosEstado().size());
         assertEquals(1, documentacion.getCambiosEstado().stream().filter(c -> c.sosActual()).count());
         assertEquals(inicio.plusHours(4), documentacion.getCambiosEstado().get(3).getFechaHoraFin());
-        assertNull(documentacion.obtenerCambioEstadoActual().getFechaHoraFin());
-        assertEquals(responsable, documentacion.obtenerCambioEstadoActual().getResponsable());
+        assertNull(documentacion.getCambiosEstado().get(4).getFechaHoraFin());
+        assertEquals(responsable, documentacion.getCambiosEstado().get(4).getResponsable());
     }
 
     @Test

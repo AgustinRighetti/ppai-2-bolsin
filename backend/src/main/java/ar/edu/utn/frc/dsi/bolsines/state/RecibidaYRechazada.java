@@ -5,6 +5,7 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** <<ConcreteState>> La documentación llegó pero no corresponde a la CM destino; vuelve al origen. */
 public class RecibidaYRechazada extends EstadoDocumentacion {
@@ -28,12 +29,17 @@ public class RecibidaYRechazada extends EstadoDocumentacion {
 
     /** CU 31: Recibida y rechazada -> Registrada (se reenvía a la CM correcta). */
     @Override
-    public void retomarRegistro(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void retomarRegistro(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                                Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new Registrada();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoRegistrada();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
+    }
+
+    private EstadoDocumentacion crearEstadoRegistrada() {
+        return new Registrada();
     }
 }

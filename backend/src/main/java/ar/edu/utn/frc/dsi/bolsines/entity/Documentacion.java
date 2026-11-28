@@ -68,49 +68,50 @@ public class Documentacion {
     // ---- Eventos: el contexto delega en su estado actual ----
 
     public void asignarARemito(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.asignarARemito(this, responsable, fechaHora);
+        estadoActual.asignarARemito(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void cancelarRemito(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.cancelarRemito(this, responsable, fechaHora);
+        estadoActual.cancelarRemito(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void agregarABolsin(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.agregarABolsin(this, responsable, fechaHora);
+        estadoActual.agregarABolsin(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void quitarDeBolsin(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.quitarDeBolsin(this, responsable, fechaHora);
+        estadoActual.quitarDeBolsin(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void registrarRetiro(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.registrarRetiro(this, responsable, fechaHora);
+        estadoActual.registrarRetiro(this, cambiosEstado, responsable, fechaHora);
     }
 
     // DEFENSA (4. State - CONTEXT): una sola línea. No pregunta en qué estado está: le DELEGA el
-    // evento a su estado actual y se pasa a sí misma (this) para que el estado concreto le cambie el estado.
+    // evento a su estado actual y le pasa a sí misma (this) y su lista de cambios de estado, para que el
+    // estado concreto busque el cambio actual y le cambie el estado.
     public void aceptar(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.aceptar(this, responsable, fechaHora);
+        estadoActual.aceptar(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void noRecibir(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.noRecibir(this, responsable, fechaHora);
+        estadoActual.noRecibir(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void rechazar(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.rechazar(this, responsable, fechaHora);
+        estadoActual.rechazar(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void redirigir(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.redirigir(this, responsable, fechaHora);
+        estadoActual.redirigir(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void retomarRegistro(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.retomarRegistro(this, responsable, fechaHora);
+        estadoActual.retomarRegistro(this, cambiosEstado, responsable, fechaHora);
     }
 
     public void darDeBaja(Empleado responsable, LocalDateTime fechaHora) {
-        estadoActual.darDeBaja(this, responsable, fechaHora);
+        estadoActual.darDeBaja(this, cambiosEstado, responsable, fechaHora);
     }
 
     // ---- Consultas: también se delegan en el estado ----
@@ -125,21 +126,12 @@ public class Documentacion {
 
     // ---- Usados por los estados concretos al hacer el cambio de estado ----
 
-    public CambioEstadoDocumentacion obtenerCambioEstadoActual() {
-        for (CambioEstadoDocumentacion cambioEstado : cambiosEstado) {
-            if (cambioEstado.sosActual()) {
-                return cambioEstado;
-            }
-        }
-        return null;
-    }
-
     public void agregarCambioEstado(CambioEstadoDocumentacion cambioEstado) {
         cambiosEstado.add(cambioEstado);
     }
 
-    public void setEstadoActual(EstadoDocumentacion estadoActual) {
-        this.estadoActual = estadoActual;
+    public void setEstado(EstadoDocumentacion estado) {
+        this.estadoActual = estado;
     }
 
     // ---- Datos ----

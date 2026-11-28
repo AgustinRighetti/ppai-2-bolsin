@@ -5,6 +5,7 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** <<ConcreteState>> Documentación incluida en un remito en estado creado. */
 public class EnRemito extends EstadoDocumentacion {
@@ -23,23 +24,33 @@ public class EnRemito extends EstadoDocumentacion {
 
     /** CU 17 Cancelar remito: En remito -> Registrada. */
     @Override
-    public void cancelarRemito(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void cancelarRemito(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                               Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new Registrada();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoRegistrada();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
     }
 
     /** CU 19 Generar bolsín: En remito -> En bolsín saliente. */
     @Override
-    public void agregarABolsin(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+    public void agregarABolsin(Documentacion documentacion, List<CambioEstadoDocumentacion> cambiosEstado,
+                               Empleado responsable, LocalDateTime fechaHora) {
+        CambioEstadoDocumentacion cambioEstadoActual = buscarCambioEstadoActual(cambiosEstado);
         cambioEstadoActual.setFechaHoraFin(fechaHora);
-        EstadoDocumentacion nuevoEstado = new EnBolsinSaliente();
-        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        EstadoDocumentacion nuevoEstado = crearEstadoEnBolsinSaliente();
+        CambioEstadoDocumentacion nuevoCambioEstado = crearCambioEstado(fechaHora, nuevoEstado, responsable);
         documentacion.agregarCambioEstado(nuevoCambioEstado);
-        documentacion.setEstadoActual(nuevoEstado);
+        documentacion.setEstado(nuevoEstado);
+    }
+
+    private EstadoDocumentacion crearEstadoRegistrada() {
+        return new Registrada();
+    }
+
+    private EstadoDocumentacion crearEstadoEnBolsinSaliente() {
+        return new EnBolsinSaliente();
     }
 }

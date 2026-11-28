@@ -236,28 +236,29 @@ classDiagram
     +darDeBaja(responsable: Empleado, fechaHora: LocalDateTime) void
     +esNoRecibida() boolean
     +esRecibidaYRechazada() boolean
-    +obtenerCambioEstadoActual() CambioEstadoDocumentacion
     +agregarCambioEstado(cambioEstado: CambioEstadoDocumentacion) void
-    +setEstadoActual(estadoActual: EstadoDocumentacion) void
+    +setEstado(estado: EstadoDocumentacion) void
     +esTuNumero(numero: Integer) boolean
   }
   class EstadoDocumentacion {
     &lt;&lt;State&gt;&gt;
     +getNombre()* String
     +getDescripcion()* String
-    +asignarARemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +cancelarRemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +agregarABolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +quitarDeBolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +registrarRetiro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +noRecibir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +redirigir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +asignarARemito(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +cancelarRemito(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +quitarDeBolsin(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
     +esNoRecibida() boolean
     +esRecibidaYRechazada() boolean
+    #buscarCambioEstadoActual(cambiosEstado: List~CambioEstadoDocumentacion~) CambioEstadoDocumentacion
+    #crearCambioEstado(fechaHora: LocalDateTime, nuevoEstado: EstadoDocumentacion, responsable: Empleado) CambioEstadoDocumentacion
     -transicionInvalida(accion: String) IllegalStateException
   }
   class CambioEstadoDocumentacion {
@@ -280,6 +281,7 @@ classDiagram
   CambioEstadoDocumentacion --> "1" EstadoDocumentacion : estado
   CambioEstadoDocumentacion --> "1" Empleado : responsable
   EstadoDocumentacion ..> Documentacion
+  EstadoDocumentacion ..> CambioEstadoDocumentacion : crea
 </pre>
 </div>
 <p class="titulo-modelo">Figura 2a – Vista estática del CU 28: estructura del patrón State (Context y State)</p>
@@ -298,34 +300,44 @@ classDiagram
     +NOMBRE: String$
     +getNombre() String
     +getDescripcion() String
-    +asignarARemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +asignarARemito(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoEnRemito() EstadoDocumentacion
+    -crearEstadoDeBaja() EstadoDocumentacion
   }
   class EnRemito {
     &lt;&lt;ConcreteState&gt;&gt;
     +NOMBRE: String$
     +getNombre() String
     +getDescripcion() String
-    +cancelarRemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +agregarABolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +cancelarRemito(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoRegistrada() EstadoDocumentacion
+    -crearEstadoEnBolsinSaliente() EstadoDocumentacion
   }
   class EnBolsinSaliente {
     &lt;&lt;ConcreteState&gt;&gt;
     +NOMBRE: String$
     +getNombre() String
     +getDescripcion() String
-    +quitarDeBolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +registrarRetiro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +quitarDeBolsin(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoEnRemito() EstadoDocumentacion
+    -crearEstadoEnBolsinEnviado() EstadoDocumentacion
   }
   class EnBolsinEnviado {
     &lt;&lt;ConcreteState&gt;&gt;
     +NOMBRE: String$
     +getNombre() String
     +getDescripcion() String
-    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +noRecibir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +redirigir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoRecibidaYAceptada() EstadoDocumentacion
+    -crearEstadoNoRecibida() EstadoDocumentacion
+    -crearEstadoRecibidaYRechazada() EstadoDocumentacion
+    -crearEstadoParaRedirigir() EstadoDocumentacion
   }
   class RecibidaYAceptada {
     &lt;&lt;ConcreteState&gt;&gt;
@@ -339,8 +351,10 @@ classDiagram
     +getNombre() String
     +getDescripcion() String
     +esNoRecibida() boolean
-    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoRegistrada() EstadoDocumentacion
+    -crearEstadoDeBaja() EstadoDocumentacion
   }
   class RecibidaYRechazada {
     &lt;&lt;ConcreteState&gt;&gt;
@@ -348,15 +362,18 @@ classDiagram
     +getNombre() String
     +getDescripcion() String
     +esRecibidaYRechazada() boolean
-    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoRegistrada() EstadoDocumentacion
   }
   class ParaRedirigir {
     &lt;&lt;ConcreteState&gt;&gt;
     +NOMBRE: String$
     +getNombre() String
     +getDescripcion() String
-    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, cambiosEstado: List~CambioEstadoDocumentacion~, responsable: Empleado, fechaHora: LocalDateTime) void
+    -crearEstadoRecibidaYAceptada() EstadoDocumentacion
+    -crearEstadoRecibidaYRechazada() EstadoDocumentacion
   }
   class DeBaja {
     &lt;&lt;ConcreteState&gt;&gt;
@@ -378,8 +395,10 @@ classDiagram
 <p class="titulo-modelo">Figura 2b – Vista estática del CU 28: estados concretos de Documentación (ConcreteState)</p>
 <p class="leyenda">
   Cada estado concreto redefine solo las transiciones que salen de él, y en cada una es el propio estado concreto el
-  que hace el cambio de estado: obtiene el cambio de estado actual de la documentación y le asigna la fecha y hora de
-  fin, crea el estado siguiente y el nuevo <code>CambioEstadoDocumentacion</code>, y se los asigna a la documentación.
+  que hace el cambio de estado: busca el cambio de estado actual (<code>buscarCambioEstadoActual()</code>) y le asigna
+  la fecha y hora de fin, crea el estado siguiente con su método privado <code>crearEstadoX()</code> y el nuevo cambio
+  de estado con <code>crearCambioEstado()</code>, y se los asigna a la documentación (<code>agregarCambioEstado()</code>
+  y <code>setEstado()</code>).
   Los eventos que no redefine conservan el comportamiento de <code>EstadoDocumentacion</code>, que rechaza la transición.
 </p>
 </section>
@@ -547,7 +566,7 @@ classDiagram
 </div>
 <p class="titulo-modelo">Figura 2c – Vista estática del CU 28: clases de interfaz, control y entidades que colaboran con el patrón</p>
 <p class="leyenda">
-  Visibilidad: <code>+</code> público, <code>-</code> privado; métodos con <code>*</code>: abstractos; atributos con
+  Visibilidad: <code>+</code> público, <code>-</code> privado, <code>#</code> protegido; métodos con <code>*</code>: abstractos; atributos con
   <code>$</code>: estáticos. <code>EstadoDocumentacion</code> es una clase abstracta. Se omiten los constructores
   (salvo el de <code>CambioEstadoDocumentacion</code>, que se usa en la vista dinámica), los getters, el atributo
   <code>id</code> de las entidades, las constantes de nombres de <code>Estado</code> y las clases <code>Sesion</code>,
@@ -618,19 +637,21 @@ sequenceDiagram
       activate DR
       DR->>D: aceptar(responsable, fechaHora)
       activate D
-      D->>EE: aceptar(this, responsable, fechaHora)
+      D->>EE: aceptar(this, cambiosEstado, responsable, fechaHora)
       activate EE
-      EE->>D: obtenerCambioEstadoActual()
+      EE->>EE: buscarCambioEstadoActual(cambiosEstado)
       loop mientras haya cambios de estado
-        D->>CA: sosActual()
+        EE->>CA: sosActual()
       end
       EE->>CA: setFechaHoraFin(fechaHora)
+      EE->>EE: crearEstadoRecibidaYAceptada()
       create participant RA@{ "type": "entity", "alias": "nuevoEstado:RecibidaYAceptada" }
       EE->>RA: new RecibidaYAceptada()
+      EE->>EE: crearCambioEstado(fechaHora, nuevoEstado, responsable)
       create participant NC@{ "type": "entity", "alias": "nuevoCambioEstado:CambioEstadoDocumentacion" }
       EE->>NC: new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable)
       EE->>D: agregarCambioEstado(nuevoCambioEstado)
-      EE->>D: setEstadoActual(nuevoEstado)
+      EE->>D: setEstado(nuevoEstado)
       deactivate EE
       deactivate D
       deactivate DR
