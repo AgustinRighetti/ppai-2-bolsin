@@ -425,14 +425,14 @@ classDiagram
   direction LR
   class PantallaRegistrarRecepcion {
     &lt;&lt;boundary&gt;&gt;
-    +opcionRegistrarRecepcionBolsin() ResponseEntity~InicioResponse~
-    -habilitarPantalla() InicioResponse
-    +tomarFiltroBolsines(request: FiltrarBolsinesRequest) ResponseEntity~List~BolsinResponse~~
-    +tomarSeleccionBolsin(request: SeleccionarBolsinRequest) ResponseEntity~DetalleBolsinResponse~
-    +tomarSeleccionOpcion(request: SeleccionarOpcionRequest) ResponseEntity~PedidoConfirmacionResponse~
-    +tomarConfirmacion(request: ConfirmacionRequest) ResponseEntity~ResultadoRecepcionResponse~
-    -informarRegistroExitoso(resultado: ResultadoRecepcionResponse) ResponseEntity~ResultadoRecepcionResponse~
-    +tomarCancelacion() ResponseEntity~MensajeResponse~
+    +opcionRegistrarRecepcionBolsin()
+    -habilitarPantalla()
+    +tomarFiltroBolsines(numeroPrecinto: String, cmOrigen: String)
+    +tomarSeleccionBolsin(numeroBolsin: Integer)
+    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String)
+    +tomarConfirmacion(confirma: boolean)
+    -informarRegistroExitoso(resultado)
+    +tomarCancelacion()
   }
   class GestorRecepcionBolsin {
     &lt;&lt;control&gt;&gt;
@@ -440,10 +440,6 @@ classDiagram
     -OPCION_NO_SE_RECIBE_TODA: int$
     -OPCION_NO_CORRESPONDE_AL_DESTINO: int$
     -OPCION_REDIRIGIR_A_OTRA_AREA: int$
-    -FORMATO_FECHA_HORA: DateTimeFormatter$
-    -sesionRepository: SesionRepository
-    -bolsinRepository: BolsinRepository
-    -estadoRepository: EstadoRepository
     -numeroBolsinSeleccionado: Integer
     -opcionSeleccionada: Integer
     -documentacionSeleccionada: List~Integer~
@@ -452,26 +448,25 @@ classDiagram
     -estadoRecibidoEnCMDestino: Estado
     -estadoRecibidoYAceptado: Estado
     -estadoRecibidoYAceptadoParcial: Estado
-    +nuevaRecepcionBolsin() InicioResponse
+    +nuevaRecepcionBolsin()
     -buscarCMLogueado() void
     -obtenerSesionActual() Sesion
     -buscarBolsinesEnviados() List~Bolsin~
-    -mostrarDatosBolsin(bolsin: Bolsin) BolsinResponse
-    +tomarFiltroBolsines(numeroPrecinto: String, cmOrigen: String) List~BolsinResponse~
-    +tomarSeleccionBolsin(numeroBolsin: Integer) DetalleBolsinResponse
-    -buscarRemitos(bolsin: Bolsin) List~RemitoResponse~
-    -buscarOpcionesRecepcion(bolsin: Bolsin) List~OpcionRecepcionResponse~
+    -mostrarDatosBolsin(bolsin: Bolsin)
+    +tomarFiltroBolsines(numeroPrecinto: String, cmOrigen: String)
+    +tomarSeleccionBolsin(numeroBolsin: Integer)
+    -buscarRemitos(bolsin: Bolsin)
+    -buscarOpcionesRecepcion(bolsin: Bolsin)
     -obtenerDescripcionOpcion(opcion: int) String
-    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String) PedidoConfirmacionResponse
-    +tomarConfirmacion(confirma: boolean) ResultadoRecepcionResponse
+    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String)
+    +tomarConfirmacion(confirma: boolean)
     -obtenerFechaYHora() void
     -buscarEstado() void
     -actualizarEstadoBolsin(bolsin: Bolsin) void
     -actualizarEstadoRemito(bolsin: Bolsin) void
     -esRecepcionParcial(remito: Remito) boolean
     -actualizarEstadoDocumentacion(bolsin: Bolsin) void
-    -enviarNotificacion(bolsin: Bolsin) List~NotificacionResponse~
-    -buscarClave(mapa: Map~ComisionMedica, List~String~~, comisionMedica: ComisionMedica) ComisionMedica
+    -enviarNotificacion(bolsin: Bolsin)
     +cancelarCU() void
     -finCU() void
     -limpiarSeleccion() void
@@ -587,7 +582,10 @@ classDiagram
   (salvo el de <code>CambioEstadoDocumentacion</code> y los <code>new()</code> de los estados concretos, que se usan en
   la vista dinámica), los getters, el atributo
   <code>id</code> de las entidades, las constantes de nombres de <code>Estado</code> y las clases <code>Sesion</code>,
-  <code>Usuario</code>, <code>TipoDocumento</code>, los repositorios y los DTO.
+  <code>Usuario</code> y <code>TipoDocumento</code>. Las firmas están expresadas a nivel de diseño: los métodos de la
+  pantalla y del gestor que devuelven datos para mostrar se indican sin tipo de retorno, y no se incluyen los detalles
+  propios de la tecnología (controller REST, objetos de request/response, repositorios), que se explican en la
+  sección 4.2.
 </p>
 </section>
 
@@ -621,7 +619,7 @@ sequenceDiagram
   participant R@{ "type": "entity", "alias": ":Remito" }
 
   Note over EB,R: Los mensajes previos al patrón se mantienen iguales a la realización de análisis (Entrega 1): tomarConfirmacion, buscarEstado, actualizarEstadoBolsin y actualizarEstadoRemito.
-  EB->>P: tomarConfirmacion(request)
+  EB->>P: tomarConfirmacion(confirma)
   activate P
   P->>G: tomarConfirmacion(confirma)
   activate G
@@ -751,6 +749,17 @@ sequenceDiagram
   <tr><td>State y estados concretos</td><td>paquete <code>state/</code>: <code>EstadoDocumentacion</code> y una clase por estado</td></tr>
   <tr><td>«entity» del dominio</td><td>paquete <code>entity/</code>, mapeadas con JPA</td></tr>
   <tr><td>CU 29 Notificar recepción de bolsín (include)</td><td><code>boundary/InterfazEmail.java</code>: el envío se simula, el e-mail se muestra en pantalla y en el log</td></tr>
+</table>
+<p>
+  La vista estática usa firmas de diseño. En el código, por usar Spring Boot con una interfaz React, esas firmas se
+  traducen así, sin cambiar el nombre de ningún método ni de sus datos:
+</p>
+<table>
+  <tr><th>En el diseño</th><th>En el código</th></tr>
+  <tr><td>Métodos de la pantalla, por ejemplo <code>tomarSeleccionBolsin(numeroBolsin: Integer)</code></td><td>Métodos del controller REST que reciben un objeto de request con esos datos (<code>SeleccionarBolsinRequest</code>) y devuelven <code>ResponseEntity</code> con la respuesta para la interfaz React</td></tr>
+  <tr><td>Métodos del gestor que devuelven datos para mostrar (<code>tomarSeleccionBolsin()</code>, <code>buscarRemitos()</code>, <code>tomarConfirmacion()</code>…)</td><td>Devuelven objetos de respuesta (DTO, en <code>dto/Dtos.java</code>): nunca se envía una entidad a la pantalla</td></tr>
+  <tr><td>El gestor conoce los bolsines, los estados y la sesión actual</td><td>Los obtiene con repositorios de Spring Data JPA (<code>BolsinRepository</code>, <code>EstadoRepository</code>, <code>SesionRepository</code>)</td></tr>
+  <tr><td><code>enviarNotificacion()</code> agrupa la documentación por CM de origen</td><td>Usa además un método auxiliar privado, <code>buscarClave()</code>, sobre un <code>Map</code></td></tr>
 </table>
 
 <h3>4.3 Persistencia del patrón State</h3>
