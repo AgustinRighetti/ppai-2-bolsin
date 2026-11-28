@@ -764,17 +764,35 @@ sequenceDiagram
   // Se dibuja un diagrama por vez para que no se superpongan al exportar a PDF.
   for (const nodo of document.querySelectorAll('.mermaid')) {
     await mermaid.run({ nodes: [nodo] });
-    // Loops: el texto se escribe "propósito | condición" y se muestra como "propósito [condición]".
-    // Mermaid puede partir el texto en varias líneas (tspan), por eso se recorre cada parte.
+    // Loops: el texto se escribe "propósito | condición". El propósito va dentro del recuadro de la
+    // etiqueta ("loop Aceptar ...") y la condición afuera, entre corchetes ("[mientras haya ...]").
     const grupos = new Set([...nodo.querySelectorAll('.loopText')].map(t => t.parentNode));
     for (const grupo of grupos) {
-      const partes = [...grupo.querySelectorAll('.loopText')].flatMap(t => {
-        const ts = [...t.querySelectorAll('tspan')];
-        return ts.length ? ts : [t];
-      });
-      if (!partes.some(t => t.textContent.includes(' | '))) continue;
-      partes[0].textContent = partes[0].textContent.replace(/^\[/, '');
-      for (const t of partes) t.textContent = t.textContent.replace(' | ', ' [');
+      const textos = [...grupo.querySelectorAll('.loopText')];
+      const completo = textos.map(t => t.textContent).join(' ').replace(/\s+/g, ' ').trim().replace(/^\[|\]$/g, '');
+      if (!completo.includes(' | ')) continue;
+      const [proposito, condicion] = completo.split(' | ');
+      const caja = grupo.querySelector('.labelBox');
+      const etiqueta = grupo.querySelector('.labelText');
+      const [x, y] = caja.getAttribute('points').trim().split(/\s+/)[0].split(',').map(Number);
+      etiqueta.textContent = 'loop ' + proposito;
+      const ancho = etiqueta.getComputedTextLength() + 18;
+      caja.setAttribute('points', `${x},${y} ${x + ancho},${y} ${x + ancho},${y + 28} ${x + ancho - 8.4},${y + 35} ${x},${y + 35}`);
+      etiqueta.setAttribute('x', x + ancho / 2);
+      const derecha = Math.max(...[...grupo.querySelectorAll('.loopLine')].map(l => Math.max(+l.getAttribute('x1'), +l.getAttribute('x2'))));
+      textos.slice(1).forEach(t => t.remove());
+      const guarda = textos[0];
+      guarda.textContent = '[' + condicion + ']';
+      guarda.setAttribute('text-anchor', 'start');
+      guarda.style.textAnchor = 'start';
+      const largo = guarda.getComputedTextLength();
+      if (x + ancho + 10 + largo < derecha - 4) {
+        guarda.setAttribute('x', x + ancho + 10);
+        guarda.setAttribute('y', y + 22);
+      } else {
+        guarda.setAttribute('x', x + 6);
+        guarda.setAttribute('y', y + 52);
+      }
     }
     // El SVG se reemplaza por una imagen vectorial: así cada diagrama se imprime en su propia hoja.
     const svg = nodo.querySelector('svg');
