@@ -599,7 +599,9 @@ classDiagram
   Se modela el escenario desde que el EB confirma la opción de recepción (paso 10) hasta que se le informa el registro
   exitoso (paso 12), para el flujo descripto (opción 1: <em>el contenido del bolsín es igual al registrado</em>). Por
   legibilidad se divide en dos figuras: la 3a llega hasta la actualización de los remitos y la 3b muestra la
-  actualización de la documentación, donde se aplica el patrón State. En los flujos alternativos, a la documentación
+  actualización de la documentación, que es la parte del escenario afectada por el rediseño (patrón State). Los
+  mensajes anteriores y posteriores se mantienen iguales a la realización de análisis y se incluyen, marcados con una
+  nota, para mostrar el contexto y la continuación del caso de uso. En los flujos alternativos, a la documentación
   marcada el gestor le envía <code>noRecibir()</code>, <code>rechazar()</code> o <code>redirigir()</code> (en este último
   caso también <code>setAreaCMCDestino()</code> al detalle), y el estado concreto crea <code>NoRecibida</code>,
   <code>RecibidaYRechazada</code> o <code>ParaRedirigir</code>; con las opciones 2 y 3, el remito que contiene esa
@@ -709,6 +711,7 @@ sequenceDiagram
       deactivate D
     end
   end
+  Note over G,IE: Fin de la parte del escenario afectada por el rediseño (patrón State). Lo que sigue es la continuación del CU, igual que en la realización de análisis.
   G->>G: enviarNotificacion(seleccionado)
   loop Notificar a cada CM de origen | mientras haya CM de origen a notificar
     G->>CM: getCorreo()
