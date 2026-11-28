@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
+import ar.edu.utn.frc.dsi.bolsines.entity.CambioEstadoDocumentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
@@ -25,15 +26,25 @@ public class NoRecibida extends EstadoDocumentacion {
         return true;
     }
 
-    /** No recibida -> Registrada (puede vincularse a un nuevo remito). */
+    /** CU 29: No recibida -> Registrada (puede vincularse a un nuevo remito). */
     @Override
     public void retomarRegistro(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new Registrada(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new Registrada();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 
-    /** No recibida -> De baja (ya no es relevante su envío). */
+    /** CU 31: No recibida -> De baja. */
     @Override
     public void darDeBaja(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new DeBaja(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new DeBaja();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 }

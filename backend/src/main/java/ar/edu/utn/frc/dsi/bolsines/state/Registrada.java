@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
+import ar.edu.utn.frc.dsi.bolsines.entity.CambioEstadoDocumentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
@@ -20,20 +21,25 @@ public class Registrada extends EstadoDocumentacion {
         return "Registrada";
     }
 
-    @Override
-    public boolean esRegistrada() {
-        return true;
-    }
-
-    /** Registrada -> En remito. */
+    /** CU 15 Generar remito: Registrada -> En remito. */
     @Override
     public void asignarARemito(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new EnRemito(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new EnRemito();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 
-    /** Registrada -> De baja. */
+    /** CU 9 Eliminar documentación: Registrada -> De baja. */
     @Override
     public void darDeBaja(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new DeBaja(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new DeBaja();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 }

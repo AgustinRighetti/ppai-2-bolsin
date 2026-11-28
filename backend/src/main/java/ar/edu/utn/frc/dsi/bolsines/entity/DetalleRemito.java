@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class DetalleRemito {
@@ -28,6 +29,16 @@ public class DetalleRemito {
 
     public boolean esDeDocumentacion(Integer numeroDocumentacion) {
         return documentacion.esTuNumero(numeroDocumentacion);
+    }
+
+    /** Verdadero si la documentación del detalle es una de las marcadas por el EB. */
+    public boolean esDeAlgunaDocumentacion(List<Integer> numerosDocumentacion) {
+        for (Integer numero : numerosDocumentacion) {
+            if (documentacion.esTuNumero(numero)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void aceptarDocumentacion(Empleado responsable, LocalDateTime fechaHora) {

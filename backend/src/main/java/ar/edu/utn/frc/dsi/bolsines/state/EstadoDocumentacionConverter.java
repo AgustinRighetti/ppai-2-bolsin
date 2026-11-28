@@ -8,8 +8,8 @@ import jakarta.persistence.Converter;
  * se vuelve a crear el objeto del estado concreto correspondiente.
  */
 // DEFENSA (5. Cierre): guarda el NOMBRE del estado en la base ("RecibidaYAceptada") y al leer vuelve
-// a crear el objeto del estado concreto (desdeNombre). Bolsín y Remito NO usan State: la profe pidió
-// State solo para Documentación.
+// a crear el objeto del estado concreto. Bolsín y Remito NO usan State: la profe pidió State solo
+// para Documentación.
 @Converter
 public class EstadoDocumentacionConverter implements AttributeConverter<EstadoDocumentacion, String> {
 
@@ -20,6 +20,20 @@ public class EstadoDocumentacionConverter implements AttributeConverter<EstadoDo
 
     @Override
     public EstadoDocumentacion convertToEntityAttribute(String nombre) {
-        return nombre == null ? null : EstadoDocumentacion.desdeNombre(nombre);
+        if (nombre == null) {
+            return null;
+        }
+        return switch (nombre) {
+            case Registrada.NOMBRE -> new Registrada();
+            case EnRemito.NOMBRE -> new EnRemito();
+            case EnBolsinSaliente.NOMBRE -> new EnBolsinSaliente();
+            case EnBolsinEnviado.NOMBRE -> new EnBolsinEnviado();
+            case RecibidaYAceptada.NOMBRE -> new RecibidaYAceptada();
+            case NoRecibida.NOMBRE -> new NoRecibida();
+            case RecibidaYRechazada.NOMBRE -> new RecibidaYRechazada();
+            case ParaRedirigir.NOMBRE -> new ParaRedirigir();
+            case DeBaja.NOMBRE -> new DeBaja();
+            default -> throw new IllegalArgumentException("Estado de documentación desconocido: " + nombre);
+        };
     }
 }

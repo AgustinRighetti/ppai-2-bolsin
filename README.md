@@ -69,7 +69,7 @@ Los e-mails del CU 29 se simulan: se muestran en la pantalla de resultado y se e
 | Context del State: `Documentacion` | `backend/.../entity/Documentacion.java` |
 | State `EstadoDocumentacion` y los 9 estados concretos | `backend/.../state/` |
 | Persistencia del estado (nombre ↔ objeto) | `backend/.../state/EstadoDocumentacionConverter.java` |
-| Opciones de recepción del paso 7 | `backend/.../entity/SituacionRecepcion.java` |
+| Opciones de recepción del paso 7 | constantes `OPCION_*` en `GestorRecepcionBolsin` y los 4 métodos `registrar...` de `Remito` |
 | Tests de las transiciones | `backend/src/test/.../state/MaquinaEstadosDocumentacionTest.java` |
 | Entidades del dominio | `backend/.../entity/` |
 | Persistencia | `backend/.../repository/` |

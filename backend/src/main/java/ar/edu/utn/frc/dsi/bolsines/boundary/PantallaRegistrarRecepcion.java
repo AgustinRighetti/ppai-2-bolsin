@@ -21,8 +21,8 @@ import java.util.List;
 
 /**
  * Boundary del CU 28: punto de entrada de la API que consume la interfaz React.
- * Los mensajes Gestor -> Pantalla de la realización (mostrarDatosBolsin, pedirSeleccionOpcion,
- * pedirConfirmacion, informarEjecucion) viajan como retorno de cada método, por ser una API REST.
+ * Por ser una API REST, los datos que el gestor devuelve viajan como respuesta de cada método y la
+ * interfaz React los muestra.
  */
 // DEFENSA (1. Arquitectura): esta es la BOUNDARY. Recibe los pedidos de la pantalla React y se los
 // pasa al gestor, no tiene lógica. Separación boundary / control / entidades, igual que en el diseño.
@@ -63,7 +63,13 @@ public class PantallaRegistrarRecepcion {
 
     @PostMapping("/confirmar")
     public ResponseEntity<ResultadoRecepcionResponse> tomarConfirmacion(@RequestBody ConfirmacionRequest request) {
-        return ResponseEntity.ok(gestor.tomarConfirmacion(request.confirma()));
+        ResultadoRecepcionResponse resultado = gestor.tomarConfirmacion(request.confirma());
+        return informarEjecucion(resultado);
+    }
+
+    /** Paso 12: informa al EB el resultado del registro (la interfaz React lo muestra). */
+    private ResponseEntity<ResultadoRecepcionResponse> informarEjecucion(ResultadoRecepcionResponse resultado) {
+        return ResponseEntity.ok(resultado);
     }
 
     @PostMapping("/cancelar")

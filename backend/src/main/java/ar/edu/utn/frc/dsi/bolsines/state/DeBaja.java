@@ -1,11 +1,6 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
-import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
-import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
-
-import java.time.LocalDateTime;
-
-/** <<ConcreteState>> Estado final: la documentación se dio de baja. */
+/** <<ConcreteState>> Estado final: la documentación se dio de baja. No tiene transiciones de salida. */
 public class DeBaja extends EstadoDocumentacion {
 
     public static final String NOMBRE = "DeBaja";

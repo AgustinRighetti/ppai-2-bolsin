@@ -1,6 +1,5 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
-import ar.edu.utn.frc.dsi.bolsines.entity.CambioEstadoDocumentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
@@ -9,23 +8,20 @@ import java.time.LocalDateTime;
 /**
  * Patrón State (Gamma) - rol <<State>>.
  *
- * Representa un estado de la máquina de estados de Documentación. Declara un método por cada
- * evento de la máquina; por defecto el evento no está permitido y lanza una excepción. Cada estado
- * concreto redefine solo las transiciones que salen de él, crea el estado siguiente y deja
- * registrado el cambio de estado (con su fecha y el empleado responsable).
- *
- * El contexto (Documentacion) no pregunta en qué estado está: delega el evento en su estado actual.
+ * Declara la interfaz común de los estados de Documentación: un método por cada evento de la máquina
+ * de estados. Por defecto el evento no está permitido en el estado y se rechaza. Cada estado concreto
+ * redefine solo las transiciones que salen de él y es él quien hace el cambio de estado.
  */
-// DEFENSA (4. State - STATE): clase abstracta, un método por cada evento de la máquina de estados.
-// Todos lanzan excepción por defecto; cada estado concreto redefine solo las transiciones que salen
-// de él. Así no hay ningún if/switch preguntando por el estado.
+// DEFENSA (4. State - STATE): clase abstracta. Declara un método por cada evento de la máquina; por
+// defecto lanza excepción porque esa transición no está permitida. NO cambia el estado: eso lo hacen
+// los estados concretos, cada uno con su propio comportamiento.
 public abstract class EstadoDocumentacion {
 
     public abstract String getNombre();
 
     public abstract String getDescripcion();
 
-    // ---- Eventos de la máquina de estados (transiciones) ----
+    // ---- Eventos de la máquina de estados (por defecto, transición no permitida) ----
 
     /** CU 15 Generar remito. */
     public void asignarARemito(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
@@ -53,9 +49,6 @@ public abstract class EstadoDocumentacion {
     }
 
     /** CU 28 Registrar recepción de bolsín (contenido igual) / CU 31 (área acepta). */
-    // DEFENSA (4. State): versión POR DEFECTO, lanza excepción porque la transición no está permitida.
-    // Ej.: aceptar una documentación Registrada -> Registrada no redefine aceptar -> se ejecuta esta
-    // -> error (HTTP 409). Solo EnBolsinEnviado y ParaRedirigir la redefinen.
     public void aceptar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
         throw transicionInvalida("aceptar");
     }
@@ -85,19 +78,7 @@ public abstract class EstadoDocumentacion {
         throw transicionInvalida("dar de baja");
     }
 
-    // ---- Consultas: cada estado responde por sí mismo ----
-
-    public boolean esRegistrada() {
-        return false;
-    }
-
-    public boolean esEnBolsinEnviado() {
-        return false;
-    }
-
-    public boolean esRecibidaYAceptada() {
-        return false;
-    }
+    // ---- Consultas: el estado concreto que corresponde responde verdadero ----
 
     public boolean esNoRecibida() {
         return false;
@@ -107,50 +88,8 @@ public abstract class EstadoDocumentacion {
         return false;
     }
 
-    public boolean esParaRedirigir() {
-        return false;
-    }
-
-    /**
-     * Pasos comunes a toda transición: cierra el cambio de estado vigente, crea el nuevo cambio de
-     * estado con el empleado responsable y deja al estado siguiente como estado actual del contexto.
-     */
-    // DEFENSA (4. State): cambia el estado de la documentación. 1) cierra el cambio de estado vigente
-    // (fecha fin), 2) crea el CambioEstadoDocumentacion nuevo con responsable y fecha (trazabilidad),
-    // 3) setea el estado siguiente en el contexto. Protected: solo lo usan los estados concretos.
-    protected void cambiarEstado(Documentacion documentacion, EstadoDocumentacion siguiente,
-                                 Empleado responsable, LocalDateTime fechaHora) {
-        CambioEstadoDocumentacion actual = documentacion.obtenerCambioEstadoActual();
-        if (actual != null) {
-            actual.setFechaHoraFin(fechaHora);
-        }
-        documentacion.agregarCambioEstado(new CambioEstadoDocumentacion(fechaHora, siguiente, responsable));
-        documentacion.setEstadoActual(siguiente);
-    }
-
     private IllegalStateException transicionInvalida(String accion) {
         return new IllegalStateException(
                 "No se puede " + accion + " una documentación en estado " + getDescripcion() + ".");
-    }
-
-    /** Reconstruye el objeto estado a partir del nombre guardado en la base de datos. */
-    public static EstadoDocumentacion desdeNombre(String nombre) {
-        return switch (nombre) {
-            case Registrada.NOMBRE -> new Registrada();
-            case EnRemito.NOMBRE -> new EnRemito();
-            case EnBolsinSaliente.NOMBRE -> new EnBolsinSaliente();
-            case EnBolsinEnviado.NOMBRE -> new EnBolsinEnviado();
-            case RecibidaYAceptada.NOMBRE -> new RecibidaYAceptada();
-            case NoRecibida.NOMBRE -> new NoRecibida();
-            case RecibidaYRechazada.NOMBRE -> new RecibidaYRechazada();
-            case ParaRedirigir.NOMBRE -> new ParaRedirigir();
-            case DeBaja.NOMBRE -> new DeBaja();
-            default -> throw new IllegalArgumentException("Estado de documentación desconocido: " + nombre);
-        };
-    }
-
-    @Override
-    public String toString() {
-        return getNombre();
     }
 }

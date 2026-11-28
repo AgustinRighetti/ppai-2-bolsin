@@ -18,7 +18,6 @@ import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 import ar.edu.utn.frc.dsi.bolsines.entity.Estado;
 import ar.edu.utn.frc.dsi.bolsines.entity.Remito;
 import ar.edu.utn.frc.dsi.bolsines.entity.Sesion;
-import ar.edu.utn.frc.dsi.bolsines.entity.SituacionRecepcion;
 import ar.edu.utn.frc.dsi.bolsines.repository.BolsinRepository;
 import ar.edu.utn.frc.dsi.bolsines.repository.EstadoRepository;
 import ar.edu.utn.frc.dsi.bolsines.repository.SesionRepository;
@@ -32,7 +31,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Clase de control del CU 28 Registrar recepción de bolsín.
@@ -46,6 +44,12 @@ import java.util.function.Predicate;
 @Service
 public class GestorRecepcionBolsin {
 
+    // Opciones de recepción que el EB elige en el paso 7 del CU 28
+    private static final int OPCION_CONTENIDO_IGUAL = 1;
+    private static final int OPCION_NO_SE_RECIBE_TODA = 2;
+    private static final int OPCION_NO_CORRESPONDE_AL_DESTINO = 3;
+    private static final int OPCION_REDIRIGIR_A_OTRA_AREA = 4;
+
     private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final SesionRepository sesionRepository;
@@ -57,7 +61,7 @@ public class GestorRecepcionBolsin {
     private Empleado empleadoLogueado;
     private ComisionMedica cmLogueada;
     private Integer numeroBolsinSeleccionado;
-    private SituacionRecepcion situacionSeleccionada;
+    private Integer opcionSeleccionada;
     private List<Integer> documentacionSeleccionada = new ArrayList<>();
     private String areaDestino;
     private LocalDateTime fechaHoraActual;
@@ -148,7 +152,7 @@ public class GestorRecepcionBolsin {
                         "El bolsín seleccionado no está pendiente de recepción en esta comisión médica."));
 
         this.numeroBolsinSeleccionado = bolsin.getNumeroBolsin();
-        this.situacionSeleccionada = null;
+        this.opcionSeleccionada = null;
 
         return new DetalleBolsinResponse(
                 bolsin.getNumeroBolsin(),
@@ -176,14 +180,30 @@ public class GestorRecepcionBolsin {
         return remitos;
     }
 
+    /** La opción 4 solo se habilita si la CM destino del bolsín es la Comisión Médica Central. */
     private List<OpcionRecepcionResponse> buscarOpcionesRecepcion(Bolsin bolsin) {
         List<OpcionRecepcionResponse> opciones = new ArrayList<>();
-        for (SituacionRecepcion situacion : SituacionRecepcion.values()) {
-            opciones.add(new OpcionRecepcionResponse(situacion.getCodigo(), situacion.getDescripcion(),
-                    situacion.requiereSeleccionDocumentacion(), situacion.requiereAreaDestino(),
-                    situacion.esAplicable(bolsin)));
-        }
+        opciones.add(new OpcionRecepcionResponse(OPCION_CONTENIDO_IGUAL,
+                obtenerDescripcionOpcion(OPCION_CONTENIDO_IGUAL), false, false, true));
+        opciones.add(new OpcionRecepcionResponse(OPCION_NO_SE_RECIBE_TODA,
+                obtenerDescripcionOpcion(OPCION_NO_SE_RECIBE_TODA), true, false, true));
+        opciones.add(new OpcionRecepcionResponse(OPCION_NO_CORRESPONDE_AL_DESTINO,
+                obtenerDescripcionOpcion(OPCION_NO_CORRESPONDE_AL_DESTINO), true, false, true));
+        opciones.add(new OpcionRecepcionResponse(OPCION_REDIRIGIR_A_OTRA_AREA,
+                obtenerDescripcionOpcion(OPCION_REDIRIGIR_A_OTRA_AREA), true, true, bolsin.tuDestinoEsCentral()));
         return opciones;
+    }
+
+    private String obtenerDescripcionOpcion(int opcion) {
+        return switch (opcion) {
+            case OPCION_CONTENIDO_IGUAL -> "El contenido del bolsín es igual al registrado";
+            case OPCION_NO_SE_RECIBE_TODA ->
+                    "No se recibe toda la documentación asociada a los remitos que contiene el bolsín";
+            case OPCION_NO_CORRESPONDE_AL_DESTINO -> "Existe documentación que no corresponde al destino";
+            case OPCION_REDIRIGIR_A_OTRA_AREA -> "La documentación se debe redirigir a otra área";
+            default -> throw new ReglaNegocioException(HttpStatus.BAD_REQUEST,
+                    "Debe seleccionar una opción de recepción válida.");
+        };
     }
 
     // ------------------------------------------------------------------ Pasos 8 y 9
@@ -192,16 +212,19 @@ public class GestorRecepcionBolsin {
     public PedidoConfirmacionResponse tomarSeleccionOpcion(Integer opcion, List<Integer> numerosDocumentacion,
                                                            String areaDestino) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
-        SituacionRecepcion elegida = SituacionRecepcion.desdeCodigo(opcion)
-                .orElseThrow(() -> new ReglaNegocioException(HttpStatus.BAD_REQUEST,
-                        "Debe seleccionar una opción de recepción válida."));
+        if (opcion == null) {
+            throw new ReglaNegocioException(HttpStatus.BAD_REQUEST, "Debe seleccionar una opción de recepción válida.");
+        }
+        String descripcion = obtenerDescripcionOpcion(opcion);
         List<Integer> documentacion = numerosDocumentacion == null ? List.of() : List.copyOf(numerosDocumentacion);
 
-        if (!elegida.esAplicable(bolsin)) {
+        if (opcion == OPCION_REDIRIGIR_A_OTRA_AREA && !bolsin.tuDestinoEsCentral()) {
             throw new ReglaNegocioException(HttpStatus.CONFLICT,
                     "La opción solo puede usarse cuando la CM destino es la Comisión Médica Central.");
         }
-        if (elegida.requiereSeleccionDocumentacion()) {
+        if (opcion == OPCION_CONTENIDO_IGUAL) {
+            documentacion = List.of();
+        } else {
             if (documentacion.isEmpty()) {
                 throw new ReglaNegocioException(HttpStatus.BAD_REQUEST,
                         "Debe indicar al menos una documentación para la opción seleccionada.");
@@ -210,11 +233,9 @@ public class GestorRecepcionBolsin {
                 throw new ReglaNegocioException(HttpStatus.BAD_REQUEST,
                         "La documentación indicada no pertenece al bolsín seleccionado.");
             }
-        } else {
-            documentacion = List.of();
         }
         String area = null;
-        if (elegida.requiereAreaDestino()) {
+        if (opcion == OPCION_REDIRIGIR_A_OTRA_AREA) {
             if (areaDestino == null || areaDestino.isBlank()) {
                 throw new ReglaNegocioException(HttpStatus.BAD_REQUEST,
                         "Debe indicar el área de la sede central a la que se redirige la documentación.");
@@ -222,11 +243,11 @@ public class GestorRecepcionBolsin {
             area = areaDestino.trim();
         }
 
-        this.situacionSeleccionada = elegida;
+        this.opcionSeleccionada = opcion;
         this.documentacionSeleccionada = documentacion;
         this.areaDestino = area;
 
-        return new PedidoConfirmacionResponse(opcion, elegida.getDescripcion(), bolsin.getNumeroBolsin(),
+        return new PedidoConfirmacionResponse(opcion, descripcion, bolsin.getNumeroBolsin(),
                 documentacion, area,
                 "¿Confirma el registro de la recepción del bolsín N° " + bolsin.getNumeroBolsin() + "?");
     }
@@ -239,12 +260,12 @@ public class GestorRecepcionBolsin {
     @Transactional
     public ResultadoRecepcionResponse tomarConfirmacion(boolean confirma) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
-        if (situacionSeleccionada == null) {
+        if (opcionSeleccionada == null) {
             throw new ReglaNegocioException(HttpStatus.CONFLICT, "Primero debe seleccionar una opción de recepción.");
         }
         if (!confirma) {
             // A6: el EB no confirma. Se descarta la opción y vuelve a elegir.
-            this.situacionSeleccionada = null;
+            this.opcionSeleccionada = null;
             this.documentacionSeleccionada = new ArrayList<>();
             this.areaDestino = null;
             return new ResultadoRecepcionResponse(false,
@@ -276,29 +297,61 @@ public class GestorRecepcionBolsin {
 
     /**
      * El bolsín pasa a Recibido en CM destino y cada remito registra la recepción de su
-     * documentación. Los cambios de estado de la documentación los resuelve el patrón State.
+     * documentación según la opción elegida. Los cambios de estado de la documentación los hacen
+     * los estados concretos (patrón State).
      */
-    // DEFENSA (2. Recorrido): 1) el bolsín pasa a "Recibido en CM destino" (SIN State, con Estado y
-    // CambioEstadoBolsin); 2) a cada remito le pide registrarRecepcion -> ahí empieza el State.
+    // DEFENSA (2. Recorrido): 1) busca los estados de Bolsín y Remito (preguntándole a cada Estado su
+    // ámbito y nombre); 2) el bolsín pasa a "Recibido en CM destino" (SIN State); 3) a cada remito le
+    // pide registrar la recepción según la opción elegida -> ahí empieza el State.
     private void actualizarEstados(Bolsin bolsin, List<Estado> estados) {
-        Estado recibidoEnCMDestino = buscarEstado(estados, e -> e.esAmbitoBolsin() && e.esRecibidoEnCMDestino());
-        Estado remitoAceptado = buscarEstado(estados, e -> e.esAmbitoRemito() && e.esRecibidoYAceptado());
-        Estado remitoAceptadoParcial = buscarEstado(estados,
-                e -> e.esAmbitoRemito() && e.esRecibidoYAceptadoParcial());
+        Estado recibidoEnCMDestino = buscarEstadoRecibidoEnCMDestino(estados);
+        Estado recibidoYAceptado = buscarEstadoRecibidoYAceptado(estados);
+        Estado recibidoYAceptadoParcial = buscarEstadoRecibidoYAceptadoParcial(estados);
 
         bolsin.recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual);
         for (Remito remito : bolsin.getRemitos()) {
-            remito.registrarRecepcion(situacionSeleccionada, documentacionSeleccionada, areaDestino,
-                    remitoAceptado, remitoAceptadoParcial, empleadoLogueado, fechaHoraActual);
+            switch (opcionSeleccionada) {
+                case OPCION_CONTENIDO_IGUAL ->
+                        remito.registrarRecepcionCompleta(recibidoYAceptado, empleadoLogueado, fechaHoraActual);
+                case OPCION_NO_SE_RECIBE_TODA ->
+                        remito.registrarDocumentacionNoRecibida(documentacionSeleccionada, recibidoYAceptado,
+                                recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
+                case OPCION_NO_CORRESPONDE_AL_DESTINO ->
+                        remito.registrarDocumentacionRechazada(documentacionSeleccionada, recibidoYAceptado,
+                                recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
+                case OPCION_REDIRIGIR_A_OTRA_AREA ->
+                        remito.registrarDocumentacionARedirigir(documentacionSeleccionada, areaDestino,
+                                recibidoYAceptado, recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
+                default -> throw new IllegalStateException("Opción de recepción desconocida: " + opcionSeleccionada);
+            }
         }
     }
 
-    /** Cada Estado responde por su ámbito y su nombre. */
-    private Estado buscarEstado(List<Estado> estados, Predicate<Estado> criterio) {
-        return estados.stream()
-                .filter(criterio)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No se encuentra parametrizado un estado requerido"));
+    private Estado buscarEstadoRecibidoEnCMDestino(List<Estado> estados) {
+        for (Estado estado : estados) {
+            if (estado.esAmbitoBolsin() && estado.esRecibidoEnCMDestino()) {
+                return estado;
+            }
+        }
+        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido en CM destino.");
+    }
+
+    private Estado buscarEstadoRecibidoYAceptado(List<Estado> estados) {
+        for (Estado estado : estados) {
+            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptado()) {
+                return estado;
+            }
+        }
+        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido y Aceptado.");
+    }
+
+    private Estado buscarEstadoRecibidoYAceptadoParcial(List<Estado> estados) {
+        for (Estado estado : estados) {
+            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptadoParcial()) {
+                return estado;
+            }
+        }
+        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido y Aceptado Parcial.");
     }
 
     /**
@@ -352,7 +405,7 @@ public class GestorRecepcionBolsin {
 
     private void limpiarSeleccion() {
         this.numeroBolsinSeleccionado = null;
-        this.situacionSeleccionada = null;
+        this.opcionSeleccionada = null;
         this.documentacionSeleccionada = new ArrayList<>();
         this.areaDestino = null;
         this.fechaHoraActual = null;

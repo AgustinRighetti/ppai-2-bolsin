@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
+import ar.edu.utn.frc.dsi.bolsines.entity.CambioEstadoDocumentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
@@ -20,15 +21,25 @@ public class EnBolsinSaliente extends EstadoDocumentacion {
         return "En bolsín saliente";
     }
 
-    /** En bolsín saliente -> En remito. */
+    /** CU 20 Modificar / CU 21 Eliminar bolsín: En bolsín saliente -> En remito. */
     @Override
     public void quitarDeBolsin(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new EnRemito(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new EnRemito();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 
-    /** En bolsín saliente -> En bolsín enviado. */
+    /** CU 27 Registrar retiro: En bolsín saliente -> En bolsín enviado. */
     @Override
     public void registrarRetiro(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new EnBolsinEnviado(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new EnBolsinEnviado();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 }

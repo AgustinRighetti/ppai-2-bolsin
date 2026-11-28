@@ -49,6 +49,8 @@
     .apaisada .diagrama { border: 0; padding: 0; }
     .apaisada .diagrama img { max-width: 100%; max-height: 158mm; width: auto; height: auto; }
     .apaisada.con-notas .diagrama img { max-height: 104mm; }
+    .apaisada.con-intro .diagrama img { max-height: 128mm; }
+    .vertical.salto .diagrama img { max-height: 212mm; }
     .apaisada .leyenda { font-size: 8.5pt; margin: 2mm 0 0; }
     .apaisada .nota { font-size: 8.5pt; margin: 2mm 0 0; padding: 2mm 3mm; }
     .vertical .diagrama { border: 0; padding: 0; margin: 2mm 0; }
@@ -194,8 +196,13 @@ stateDiagram-v2
 </section>
 
 <!-- ============================ 2. VISTA ESTÁTICA ============================ -->
-<section class="apaisada">
+<section class="vertical salto">
 <h2>2. Vista estática de la realización de caso de uso de diseño</h2>
+<p class="leyenda">
+  Por legibilidad, la vista estática se presenta en tres figuras: 2a, estructura del patrón State (Context y State);
+  2b, estados concretos; 2c, clases de interfaz, control y entidades del CU 28 que colaboran con el patrón.
+  Los atributos y métodos son los del código fuente, con sus tipos y su visibilidad.
+</p>
 <div class="diagrama">
 <pre class="mermaid">
 classDiagram
@@ -203,10 +210,12 @@ classDiagram
   class DetalleRemito {
     &lt;&lt;entity&gt;&gt;
     -areaCMCDestino: String
+    +esDeDocumentacion(numeroDocumentacion: Integer) boolean
+    +esDeAlgunaDocumentacion(numerosDocumentacion: List~Integer~) boolean
     +aceptarDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
     +noRecibirDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
     +rechazarDocumentacion(responsable: Empleado, fechaHora: LocalDateTime) void
-    +redirigirDocumentacion(area: String, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigirDocumentacion(areaCMCDestino: String, responsable: Empleado, fechaHora: LocalDateTime) void
     +esDocumentacionFaltanteORechazada() boolean
   }
   class Documentacion {
@@ -214,9 +223,10 @@ classDiagram
     -numero: Integer
     -asunto: String
     -fechaPase: LocalDate
-    -estadoActual: EstadoDocumentacion
     +asignarARemito(responsable: Empleado, fechaHora: LocalDateTime) void
+    +cancelarRemito(responsable: Empleado, fechaHora: LocalDateTime) void
     +agregarABolsin(responsable: Empleado, fechaHora: LocalDateTime) void
+    +quitarDeBolsin(responsable: Empleado, fechaHora: LocalDateTime) void
     +registrarRetiro(responsable: Empleado, fechaHora: LocalDateTime) void
     +aceptar(responsable: Empleado, fechaHora: LocalDateTime) void
     +noRecibir(responsable: Empleado, fechaHora: LocalDateTime) void
@@ -227,83 +237,133 @@ classDiagram
     +esNoRecibida() boolean
     +esRecibidaYRechazada() boolean
     +obtenerCambioEstadoActual() CambioEstadoDocumentacion
-    +agregarCambioEstado(cambio: CambioEstadoDocumentacion) void
-    +setEstadoActual(estado: EstadoDocumentacion) void
+    +agregarCambioEstado(cambioEstado: CambioEstadoDocumentacion) void
+    +setEstadoActual(estadoActual: EstadoDocumentacion) void
+    +esTuNumero(numero: Integer) boolean
   }
   class EstadoDocumentacion {
     &lt;&lt;State&gt;&gt;
     +getNombre()* String
     +getDescripcion()* String
-    +asignarARemito(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +cancelarRemito(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +agregarABolsin(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +quitarDeBolsin(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +registrarRetiro(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +aceptar(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +noRecibir(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +rechazar(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +redirigir(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +retomarRegistro(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +darDeBaja(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +asignarARemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +cancelarRemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +quitarDeBolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
     +esNoRecibida() boolean
     +esRecibidaYRechazada() boolean
-    #cambiarEstado(doc: Documentacion, siguiente: EstadoDocumentacion, responsable: Empleado, fechaHora: LocalDateTime) void
-    +desdeNombre(nombre: String)$ EstadoDocumentacion
+    -transicionInvalida(accion: String) IllegalStateException
   }
-  class Registrada {
-    +asignarARemito(doc, resp, fh) void
-    +darDeBaja(doc, resp, fh) void
-  }
-  class EnRemito {
-    +cancelarRemito(doc, resp, fh) void
-    +agregarABolsin(doc, resp, fh) void
-  }
-  class EnBolsinSaliente {
-    +quitarDeBolsin(doc, resp, fh) void
-    +registrarRetiro(doc, resp, fh) void
-  }
-  class EnBolsinEnviado {
-    +aceptar(doc, resp, fh) void
-    +noRecibir(doc, resp, fh) void
-    +rechazar(doc, resp, fh) void
-    +redirigir(doc, resp, fh) void
-  }
-  class RecibidaYAceptada {
-    +esRecibidaYAceptada() boolean
-  }
-  class NoRecibida {
-    +retomarRegistro(doc, resp, fh) void
-    +darDeBaja(doc, resp, fh) void
-    +esNoRecibida() boolean
-  }
-  class RecibidaYRechazada {
-    +retomarRegistro(doc, resp, fh) void
-    +esRecibidaYRechazada() boolean
-  }
-  class ParaRedirigir {
-    +aceptar(doc, resp, fh) void
-    +rechazar(doc, resp, fh) void
-  }
-  class DeBaja
   class CambioEstadoDocumentacion {
     &lt;&lt;entity&gt;&gt;
     -fechaHoraInicio: LocalDateTime
     -fechaHoraFin: LocalDateTime
-    -estado: EstadoDocumentacion
-    +new(fechaHora: LocalDateTime, estado: EstadoDocumentacion, responsable: Empleado)
+    +CambioEstadoDocumentacion(fechaHoraInicio: LocalDateTime, estado: EstadoDocumentacion, responsable: Empleado)
     +sosActual() boolean
-    +setFechaHoraFin(fechaHora: LocalDateTime) void
+    +setFechaHoraFin(fechaHoraFin: LocalDateTime) void
   }
   class Empleado {
     &lt;&lt;entity&gt;&gt;
+    -nombre: String
+    -apellido: String
+    -email: String
   }
-
   DetalleRemito --> "1" Documentacion : documentacion
-  Documentacion o--> "1" EstadoDocumentacion : estadoActual
+  Documentacion --> "1" EstadoDocumentacion : estadoActual
   Documentacion "1" *--> "1..*" CambioEstadoDocumentacion : cambiosEstado
   CambioEstadoDocumentacion --> "1" EstadoDocumentacion : estado
   CambioEstadoDocumentacion --> "1" Empleado : responsable
   EstadoDocumentacion ..> Documentacion
+</pre>
+</div>
+<p class="titulo-modelo">Figura 2a – Vista estática del CU 28: estructura del patrón State (Context y State)</p>
+</section>
+
+<section class="vertical salto">
+<div class="diagrama">
+<pre class="mermaid">
+classDiagram
+  direction LR
+  class EstadoDocumentacion {
+    &lt;&lt;State&gt;&gt;
+  }
+  class Registrada {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +asignarARemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class EnRemito {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +cancelarRemito(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarABolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class EnBolsinSaliente {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +quitarDeBolsin(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarRetiro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class EnBolsinEnviado {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +noRecibir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +redirigir(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class RecibidaYAceptada {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+  }
+  class NoRecibida {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +esNoRecibida() boolean
+    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +darDeBaja(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class RecibidaYRechazada {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +esRecibidaYRechazada() boolean
+    +retomarRegistro(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class ParaRedirigir {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+    +aceptar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+    +rechazar(documentacion: Documentacion, responsable: Empleado, fechaHora: LocalDateTime) void
+  }
+  class DeBaja {
+    &lt;&lt;ConcreteState&gt;&gt;
+    +NOMBRE: String$
+    +getNombre() String
+    +getDescripcion() String
+  }
   EstadoDocumentacion <|-- Registrada
   EstadoDocumentacion <|-- EnRemito
   EstadoDocumentacion <|-- EnBolsinSaliente
@@ -315,7 +375,13 @@ classDiagram
   EstadoDocumentacion <|-- DeBaja
 </pre>
 </div>
-<p class="titulo-modelo">Figura 2a – Vista estática del CU 28: estructura resultante de la aplicación del patrón State</p>
+<p class="titulo-modelo">Figura 2b – Vista estática del CU 28: estados concretos de Documentación (ConcreteState)</p>
+<p class="leyenda">
+  Cada estado concreto redefine solo las transiciones que salen de él, y en cada una es el propio estado concreto el
+  que hace el cambio de estado: obtiene el cambio de estado actual de la documentación y le asigna la fecha y hora de
+  fin, crea el estado siguiente y el nuevo <code>CambioEstadoDocumentacion</code>, y se los asigna a la documentación.
+  Los eventos que no redefine conservan el comportamiento de <code>EstadoDocumentacion</code>, que rechaza la transición.
+</p>
 </section>
 
 <section class="apaisada">
@@ -325,51 +391,59 @@ classDiagram
   direction TB
   class PantallaRegistrarRecepcion {
     &lt;&lt;boundary&gt;&gt;
-    -gestor: GestorRecepcionBolsin
-    +opcionRegistrarRecepcionBolsin() InicioResponse
+    +opcionRegistrarRecepcionBolsin() ResponseEntity~InicioResponse~
     -habilitarPantalla() InicioResponse
-    +tomarFiltroBolsines(request: FiltrarBolsinesRequest) List~BolsinResponse~
-    +tomarSeleccionBolsin(request: SeleccionarBolsinRequest) DetalleBolsinResponse
-    +tomarSeleccionOpcion(request: SeleccionarOpcionRequest) PedidoConfirmacionResponse
-    +tomarConfirmacion(request: ConfirmacionRequest) ResultadoRecepcionResponse
-    +tomarCancelacion() MensajeResponse
+    +tomarFiltroBolsines(request: FiltrarBolsinesRequest) ResponseEntity~List~BolsinResponse~~
+    +tomarSeleccionBolsin(request: SeleccionarBolsinRequest) ResponseEntity~DetalleBolsinResponse~
+    +tomarSeleccionOpcion(request: SeleccionarOpcionRequest) ResponseEntity~PedidoConfirmacionResponse~
+    +tomarConfirmacion(request: ConfirmacionRequest) ResponseEntity~ResultadoRecepcionResponse~
+    -informarEjecucion(resultado: ResultadoRecepcionResponse) ResponseEntity~ResultadoRecepcionResponse~
+    +tomarCancelacion() ResponseEntity~MensajeResponse~
   }
   class GestorRecepcionBolsin {
     &lt;&lt;control&gt;&gt;
-    -empleadoLogueado: Empleado
-    -cmLogueada: ComisionMedica
+    -OPCION_CONTENIDO_IGUAL: int$
+    -OPCION_NO_SE_RECIBE_TODA: int$
+    -OPCION_NO_CORRESPONDE_AL_DESTINO: int$
+    -OPCION_REDIRIGIR_A_OTRA_AREA: int$
+    -FORMATO_FECHA_HORA: DateTimeFormatter$
+    -sesionRepository: SesionRepository
+    -bolsinRepository: BolsinRepository
+    -estadoRepository: EstadoRepository
     -numeroBolsinSeleccionado: Integer
-    -situacionSeleccionada: SituacionRecepcion
+    -opcionSeleccionada: Integer
     -documentacionSeleccionada: List~Integer~
     -areaDestino: String
     -fechaHoraActual: LocalDateTime
     +nuevaRecepcionBolsin() InicioResponse
+    -buscarCMLogueado() void
+    -obtenerSesionActual() Sesion
+    -buscarBolsinesEnviados() List~Bolsin~
+    -mostrarDatosBolsin(bolsin: Bolsin) BolsinResponse
     +tomarFiltroBolsines(numeroPrecinto: String, cmOrigen: String) List~BolsinResponse~
     +tomarSeleccionBolsin(numeroBolsin: Integer) DetalleBolsinResponse
-    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String) PedidoConfirmacionResponse
-    +tomarConfirmacion(confirma: boolean) ResultadoRecepcionResponse
-    +cancelarCU() void
-    -buscarCMLogueado() void
-    -buscarBolsinesEnviados() List~Bolsin~
     -buscarRemitos(bolsin: Bolsin) List~RemitoResponse~
     -buscarOpcionesRecepcion(bolsin: Bolsin) List~OpcionRecepcionResponse~
+    -obtenerDescripcionOpcion(opcion: int) String
+    +tomarSeleccionOpcion(opcion: Integer, numerosDocumentacion: List~Integer~, areaDestino: String) PedidoConfirmacionResponse
+    +tomarConfirmacion(confirma: boolean) ResultadoRecepcionResponse
     -obtenerFechaYHora() void
     -buscarEstados() List~Estado~
     -actualizarEstados(bolsin: Bolsin, estados: List~Estado~) void
-    -buscarEstado(estados: List~Estado~, criterio: Predicate~Estado~) Estado
+    -buscarEstadoRecibidoEnCMDestino(estados: List~Estado~) Estado
+    -buscarEstadoRecibidoYAceptado(estados: List~Estado~) Estado
+    -buscarEstadoRecibidoYAceptadoParcial(estados: List~Estado~) Estado
     -notificarRecepcionBolsin(bolsin: Bolsin) List~NotificacionResponse~
+    -buscarClave(mapa: Map~ComisionMedica, List~String~~, comisionMedica: ComisionMedica) ComisionMedica
+    +cancelarCU() void
     -finCU() void
+    -limpiarSeleccion() void
+    -validarCUIniciado() void
+    -obtenerBolsinSeleccionado() Bolsin
   }
-  class SituacionRecepcion {
-    &lt;&lt;enumeration&gt;&gt;
-    CONTENIDO_IGUAL
-    NO_SE_RECIBE_TODA
-    NO_CORRESPONDE_AL_DESTINO
-    REDIRIGIR_A_OTRA_AREA
-    +desdeCodigo(codigo: Integer)$ Optional~SituacionRecepcion~
-    +esAplicable(bolsin: Bolsin) boolean
-    +requiereSeleccionDocumentacion() boolean
-    +requiereAreaDestino() boolean
+  class InterfazEmail {
+    &lt;&lt;boundary&gt;&gt;
+    +enviarEmail(destinatario: String, asunto: String, cuerpo: String) void
   }
   class Bolsin {
     &lt;&lt;entity&gt;&gt;
@@ -377,21 +451,29 @@ classDiagram
     -fecha: LocalDate
     -peso: Integer
     -numeroPrecinto: String
-    +esTuCMDestino(cm: ComisionMedica) boolean
+    +asociarRemito(remito: Remito) void
+    +esTuNumero(numeroBolsin: Integer) boolean
+    +esTuCMDestino(comisionMedica: ComisionMedica) boolean
     +sosEnviado() boolean
-    +tenesPrecinto(numero: String) boolean
+    +tenesPrecinto(numeroPrecinto: String) boolean
     +tuCMOrigenSeLlama(nombre: String) boolean
     +tuDestinoEsCentral() boolean
-    +contieneDocumentaciones(numeros: List~Integer~) boolean
-    +recibir(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +contieneDocumentaciones(numerosDocumentacion: List~Integer~) boolean
+    +recibir(estadoRecibido: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +crearCambioEstado(estado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
     -obtenerCambioEstadoActual() CambioEstadoBolsin
   }
   class Remito {
     &lt;&lt;entity&gt;&gt;
     -numero: Integer
     -fecha: LocalDate
-    +contieneDocumentacion(numero: Integer) boolean
-    +registrarRecepcion(situacion: SituacionRecepcion, docsConNovedad: List~Integer~, area: String, estadoAceptado: Estado, estadoAceptadoParcial: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +agregarDocumentacion(documentacion: Documentacion) void
+    +contieneDocumentacion(numeroDocumentacion: Integer) boolean
+    +registrarRecepcionCompleta(estadoRecibidoYAceptado: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarDocumentacionNoRecibida(numerosDocumentacion: List~Integer~, estadoRecibidoYAceptado: Estado, estadoRecibidoYAceptadoParcial: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarDocumentacionRechazada(numerosDocumentacion: List~Integer~, estadoRecibidoYAceptado: Estado, estadoRecibidoYAceptadoParcial: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    +registrarDocumentacionARedirigir(numerosDocumentacion: List~Integer~, areaCMCDestino: String, estadoRecibidoYAceptado: Estado, estadoRecibidoYAceptadoParcial: Estado, responsable: Empleado, fechaHora: LocalDateTime) void
+    -actualizarEstado(estadoRecibidoYAceptado: Estado, estadoRecibidoYAceptadoParcial: Estado) void
     -tenesDocumentacionFaltanteORechazada() boolean
     +setEstado(estado: Estado) void
   }
@@ -407,7 +489,7 @@ classDiagram
     -fechaHoraFin: LocalDateTime
     +sosActual() boolean
     +sosEnviado() boolean
-    +setFechaHoraFin(fechaHora: LocalDateTime) void
+    +setFechaHoraFin(fechaHoraFin: LocalDateTime) void
   }
   class Estado {
     &lt;&lt;entity&gt;&gt;
@@ -425,122 +507,152 @@ classDiagram
     &lt;&lt;entity&gt;&gt;
     -nombre: String
     -apellido: String
-    +getCM() ComisionMedica
+    -email: String
   }
   class ComisionMedica {
     &lt;&lt;entity&gt;&gt;
     -codigo: String
     -nombre: String
+    -direccion: String
     -email: String
+    -telefono: String
     -central: boolean
+    +esTuCodigo(codigo: String) boolean
     +sosVos(otra: ComisionMedica) boolean
     +esCentral() boolean
+    +tuNombreContiene(texto: String) boolean
   }
 
-  PantallaRegistrarRecepcion ..> GestorRecepcionBolsin
+  PantallaRegistrarRecepcion --> "1" GestorRecepcionBolsin : gestor
+  GestorRecepcionBolsin --> "1" InterfazEmail : interfazEmail
+  GestorRecepcionBolsin --> "0..1" Empleado : empleadoLogueado
+  GestorRecepcionBolsin --> "0..1" ComisionMedica : cmLogueada
   GestorRecepcionBolsin ..> Bolsin
+  GestorRecepcionBolsin ..> Remito
   GestorRecepcionBolsin ..> Estado
-  GestorRecepcionBolsin --> "0..1" SituacionRecepcion : situacionSeleccionada
-  GestorRecepcionBolsin --> "1" Empleado : empleadoLogueado
   Bolsin "1" o--> "1..*" Remito : remitos
   Bolsin "1" *--> "1..*" CambioEstadoBolsin : cambiosEstado
   Bolsin --> "1" ComisionMedica : origen
   Bolsin --> "1" ComisionMedica : destino
   Remito "1" *--> "1..*" DetalleRemito : detalleRemito
   Remito --> "1" Estado : estado
+  Remito --> "1" ComisionMedica : origen
+  Remito --> "1" ComisionMedica : destino
   DetalleRemito --> "1" Documentacion : documentacion
   CambioEstadoBolsin --> "1" Estado : estado
   CambioEstadoBolsin --> "1" Empleado : responsable
-  Empleado --> "1" ComisionMedica : asignadoA
+  Empleado --> "1" ComisionMedica : comisionMedica
+
 </pre>
 </div>
-<p class="titulo-modelo">Figura 2b – Vista estática del CU 28: clases de interfaz, control y entidades que colaboran con el patrón</p>
+<p class="titulo-modelo">Figura 2c – Vista estática del CU 28: clases de interfaz, control y entidades que colaboran con el patrón</p>
 <p class="leyenda">
-  Visibilidad: <code>+</code> público, <code>-</code> privado, <code>#</code> protegido; métodos en cursiva o con
-  <code>*</code>: abstractos; subrayados o con <code>$</code>: estáticos. En las clases de estado concreto
-  <code>(doc, resp, fh)</code> abrevia la firma <code>(doc: Documentacion, responsable: Empleado, fechaHora: LocalDateTime)</code>
-  heredada de <code>EstadoDocumentacion</code>; cada una redefine solo las transiciones que salen de ella. Todas
-  redefinen además <code>getNombre()</code> y <code>getDescripcion()</code>. Se omiten <code>Sesion</code>,
-  <code>Usuario</code>, <code>TipoDocumento</code> y los getters simples.
+  Visibilidad: <code>+</code> público, <code>-</code> privado; métodos con <code>*</code>: abstractos; atributos con
+  <code>$</code>: estáticos. <code>EstadoDocumentacion</code> es una clase abstracta. Se omiten los constructores
+  (salvo el de <code>CambioEstadoDocumentacion</code>, que se usa en la vista dinámica), los getters, el atributo
+  <code>id</code> de las entidades, las constantes de nombres de <code>Estado</code> y las clases <code>Sesion</code>,
+  <code>Usuario</code>, <code>TipoDocumento</code>, los repositorios y los DTO.
 </p>
 </section>
 
 
 <!-- ============================ 3. VISTA DINÁMICA ============================ -->
-<section class="apaisada con-notas">
+<section class="apaisada con-intro">
 <h2>3. Vista dinámica de la realización de caso de uso de diseño</h2>
-<p>
+<p class="leyenda">
   Se modela la parte del escenario que cambia por la aplicación del patrón: desde que el EB confirma la opción de
-  recepción (paso 10) hasta la actualización de estados (paso 11), para el flujo descripto
-  (<em>el contenido del bolsín es igual al registrado</em>). En los flujos alternativos solo cambia el mensaje que
-  <code>DetalleRemito</code> envía a la documentación (<code>noRecibir()</code>, <code>rechazar()</code> o
-  <code>redirigir()</code>) y, por lo tanto, el estado concreto que se crea.
+  recepción (paso 10) hasta que se informa el resultado (paso 12), para el flujo descripto (opción 1: <em>el contenido
+  del bolsín es igual al registrado</em>). En los flujos alternativos el gestor le envía al remito
+  <code>registrarDocumentacionNoRecibida()</code>, <code>registrarDocumentacionRechazada()</code> o
+  <code>registrarDocumentacionARedirigir()</code>, y a la documentación marcada le llega <code>noRecibir()</code>,
+  <code>rechazar()</code> o <code>redirigir()</code>, con lo que el estado concreto crea <code>NoRecibida</code>,
+  <code>RecibidaYRechazada</code> o <code>ParaRedirigir</code>. El guardado en la base (<code>bolsinRepository.save()</code>)
+  y los getters usados para armar la respuesta no se modelan.
 </p>
 <div class="diagrama">
 <pre class="mermaid">
 sequenceDiagram
   autonumber
-  actor EB as Encargado<br/>de Bolsines
-  participant P as :Pantalla<br/>RegistrarRecepcion
-  participant G as :Gestor<br/>RecepcionBolsin
-  participant B as seleccionado:<br/>Bolsin
-  participant R as :Remito
-  participant DR as :DetalleRemito
-  participant D as :Documentacion
-  participant E as actual:<br/>EnBolsinEnviado
-  participant CD as actual:CambioEstado<br/>Documentacion
-  participant N as :RecibidaY<br/>Aceptada
-  participant NCD as :CambioEstado<br/>Documentacion
+  actor EB as :EncargadoDeBolsines
+  participant P@{ "type": "boundary", "alias": ":PantallaRegistrarRecepcion" }
+  participant G@{ "type": "control", "alias": ":GestorRecepcionBolsin" }
+  participant E@{ "type": "entity", "alias": ":Estado" }
+  participant B@{ "type": "entity", "alias": "seleccionado:Bolsin" }
+  participant R@{ "type": "entity", "alias": ":Remito" }
+  participant DR@{ "type": "entity", "alias": ":DetalleRemito" }
+  participant D@{ "type": "entity", "alias": ":Documentacion" }
+  participant EE@{ "type": "entity", "alias": "actual:EnBolsinEnviado" }
+  participant CA@{ "type": "entity", "alias": "actual:CambioEstadoDocumentacion" }
+  participant IE@{ "type": "boundary", "alias": ":InterfazEmail" }
 
-  EB->>P: tomarConfirmacion()
+  EB->>P: tomarConfirmacion(request)
+  activate P
   P->>G: tomarConfirmacion(confirma)
+  activate G
+  G->>G: obtenerBolsinSeleccionado()
   G->>G: obtenerFechaYHora()
   G->>G: buscarEstados()
   G->>G: actualizarEstados(bolsin, estados)
-  G->>B: recibir(recibidoEnCMDestino, resp, fh)
-  loop Remitos del bolsín [mientras haya remitos]
-    G->>R: registrarRecepcion(situacion, docs, area, aceptado, parcial, resp, fh)
-    loop Detalles del remito [mientras haya detalles]
-      R->>DR: esDeDocumentacion(numero)
-      R->>DR: aceptarDocumentacion(resp, fh)
-      DR->>D: aceptar(resp, fh)
-      D->>E: aceptar(this, resp, fh)
-      E->>N: new()
-      E->>E: cambiarEstado(doc, siguiente, resp, fh)
-      E->>D: obtenerCambioEstadoActual()
-      E->>CD: setFechaHoraFin(fh)
-      E->>NCD: new(fh, siguiente, resp)
-      E->>D: agregarCambioEstado(nuevoCambio)
-      E->>D: setEstadoActual(siguiente)
+  G->>G: buscarEstadoRecibidoEnCMDestino(estados)
+  loop mientras haya estados
+    G->>E: esAmbitoBolsin()
+    G->>E: esRecibidoEnCMDestino()
+  end
+  G->>G: buscarEstadoRecibidoYAceptado(estados)
+  loop mientras haya estados
+    G->>E: esAmbitoRemito()
+    G->>E: esRecibidoYAceptado()
+  end
+  G->>G: buscarEstadoRecibidoYAceptadoParcial(estados)
+  loop mientras haya estados
+    G->>E: esAmbitoRemito()
+    G->>E: esRecibidoYAceptadoParcial()
+  end
+  G->>B: recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual)
+  loop mientras haya remitos en el bolsín
+    Note over G,R: opcionSeleccionada = OPCION_CONTENIDO_IGUAL (flujo descripto)
+    G->>R: registrarRecepcionCompleta(recibidoYAceptado, empleadoLogueado, fechaHoraActual)
+    activate R
+    loop mientras haya detalles en el remito
+      R->>DR: aceptarDocumentacion(responsable, fechaHora)
+      activate DR
+      DR->>D: aceptar(responsable, fechaHora)
+      activate D
+      D->>EE: aceptar(this, responsable, fechaHora)
+      activate EE
+      EE->>D: obtenerCambioEstadoActual()
+      loop mientras haya cambios de estado
+        D->>CA: sosActual()
+      end
+      EE->>CA: setFechaHoraFin(fechaHora)
+      create participant RA@{ "type": "entity", "alias": "nuevoEstado:RecibidaYAceptada" }
+      EE->>RA: new RecibidaYAceptada()
+      create participant NC@{ "type": "entity", "alias": "nuevoCambioEstado:CambioEstadoDocumentacion" }
+      EE->>NC: new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable)
+      EE->>D: agregarCambioEstado(nuevoCambioEstado)
+      EE->>D: setEstadoActual(nuevoEstado)
+      deactivate EE
+      deactivate D
+      deactivate DR
     end
-    R->>R: tenesDocumentacionFaltanteORechazada()
-    loop Detalles del remito [mientras haya detalles]
-      R->>DR: esDocumentacionFaltanteORechazada()
-      DR->>D: esNoRecibida()
-      DR->>D: esRecibidaYRechazada()
-    end
-    R->>R: setEstado(aceptado)
+    R->>R: setEstado(estadoRecibidoYAceptado)
+    deactivate R
   end
   G->>G: notificarRecepcionBolsin(bolsin)
+  loop mientras haya CM de origen a notificar
+    G->>IE: enviarEmail(destinatario, asunto, cuerpo)
+  end
+  G->>G: buscarRemitos(bolsin)
   G->>G: finCU()
-  G-->>P: resultado de la recepción
-  P-->>EB: informarEjecucion()
+  G-->>P: resultado
+  deactivate G
+  P->>P: informarEjecucion(resultado)
+  P-->>EB: resultado del registro
+  deactivate P
+
 </pre>
 </div>
 <p class="titulo-modelo">Figura 3 – Vista dinámica del rediseño del CU 28 con el patrón State (confirmación y actualización de estados)</p>
-<p class="leyenda">
-  Abreviaturas usadas en los mensajes: <code>docs</code> = numerosDocumentacion, <code>area</code> = areaDestino,
-  <code>resp</code> = responsable (Empleado), <code>fh</code> = fechaHora, <code>siguiente</code> = estado nuevo creado.
-  Las firmas completas están en la vista estática.
-</p>
-<div class="nota">
-  <strong>Decisiones respecto de la realización de análisis:</strong>
-  la documentación ya no busca su estado destino entre todos los objetos <code>Estado</code>: el estado concreto actual
-  crea el siguiente. <code>esNoRecibida()</code> y <code>esRecibidaYRechazada()</code> también se delegan en el
-  estado actual. Los mensajes del gestor hacia la pantalla (<code>pedirConfirmacion()</code>,
-  <code>informarEjecucion()</code>, etc.) se resuelven como retorno de los métodos por tratarse de una API REST, igual
-  que en el ejemplo de la cátedra.
-</div>
 </section>
 
 
@@ -572,7 +684,7 @@ sequenceDiagram
   nombre del estado (columna <code>estado_actual</code> de <code>DOCUMENTACION</code> y <code>estado</code> de
   <code>CAMBIO_ESTADO_DOCUMENTACION</code>). Un <code>AttributeConverter</code> de JPA
   (<code>EstadoDocumentacionConverter</code>) convierte el objeto estado en su nombre al guardar y, al leer, vuelve a
-  crear el objeto del estado concreto con <code>EstadoDocumentacion.desdeNombre()</code>.
+  crear el objeto del estado concreto que corresponde a ese nombre (<code>new Registrada()</code>, <code>new EnBolsinEnviado()</code>, etc.).
 </p>
 
 <h3>4.4 Flujos que se pueden ejecutar</h3>
@@ -626,8 +738,8 @@ sequenceDiagram
 
 </div>
 <script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: false, theme: 'neutral', themeVariables: { fontSize: '15px' }, sequence: { useMaxWidth: true, actorMargin: 18, width: 118, messageMargin: 26, boxMargin: 6, mirrorActors: false }, class: { useMaxWidth: true } });
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, theme: 'neutral', themeVariables: { fontSize: '15px', actorBorder: '#333333', actorBkg: '#ffffff', actorTextColor: '#111111', actorLineColor: '#888888', noteBkgColor: '#fff7cc', noteTextColor: '#222222', noteBorderColor: '#c9a227', signalColor: '#222222', signalTextColor: '#111111' }, sequence: { useMaxWidth: true, actorMargin: 18, width: 118, messageMargin: 26, boxMargin: 6, mirrorActors: false }, class: { useMaxWidth: true } });
   // Se dibuja un diagrama por vez para que no se superpongan al exportar a PDF.
   for (const nodo of document.querySelectorAll('.mermaid')) {
     await mermaid.run({ nodes: [nodo] });

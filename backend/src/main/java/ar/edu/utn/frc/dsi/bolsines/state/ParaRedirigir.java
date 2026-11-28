@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.dsi.bolsines.state;
 
+import ar.edu.utn.frc.dsi.bolsines.entity.CambioEstadoDocumentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Documentacion;
 import ar.edu.utn.frc.dsi.bolsines.entity.Empleado;
 
@@ -20,20 +21,25 @@ public class ParaRedirigir extends EstadoDocumentacion {
         return "Para redirigir";
     }
 
-    @Override
-    public boolean esParaRedirigir() {
-        return true;
-    }
-
-    /** CU 31: el área la recibe y es correcta. */
+    /** CU 31 [es correcta]: Para redirigir -> Recibida y aceptada. */
     @Override
     public void aceptar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new RecibidaYAceptada(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new RecibidaYAceptada();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 
-    /** CU 31: el área la recibe y no le corresponde. */
+    /** CU 31 [no es correcta]: Para redirigir -> Recibida y rechazada. */
     @Override
     public void rechazar(Documentacion documentacion, Empleado responsable, LocalDateTime fechaHora) {
-        cambiarEstado(documentacion, new RecibidaYRechazada(), responsable, fechaHora);
+        CambioEstadoDocumentacion cambioEstadoActual = documentacion.obtenerCambioEstadoActual();
+        cambioEstadoActual.setFechaHoraFin(fechaHora);
+        EstadoDocumentacion nuevoEstado = new RecibidaYRechazada();
+        CambioEstadoDocumentacion nuevoCambioEstado = new CambioEstadoDocumentacion(fechaHora, nuevoEstado, responsable);
+        documentacion.agregarCambioEstado(nuevoCambioEstado);
+        documentacion.setEstadoActual(nuevoEstado);
     }
 }

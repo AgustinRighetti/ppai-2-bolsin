@@ -25,7 +25,7 @@ import java.util.List;
  *
  * Mantiene una referencia a su estado actual (EstadoDocumentacion) y le delega cada evento de la
  * máquina de estados. No contiene condicionales sobre el estado: es el estado concreto el que
- * sabe si la transición está permitida y cuál es el estado siguiente.
+ * sabe si la transición está permitida y el que hace el cambio de estado.
  */
 @Entity
 public class Documentacion {
@@ -88,7 +88,7 @@ public class Documentacion {
     }
 
     // DEFENSA (4. State - CONTEXT): una sola línea. No pregunta en qué estado está: le DELEGA el
-    // evento a su estado actual y se pasa a sí misma (this) para que el estado le pueda cambiar el estado.
+    // evento a su estado actual y se pasa a sí misma (this) para que el estado concreto le cambie el estado.
     public void aceptar(Empleado responsable, LocalDateTime fechaHora) {
         estadoActual.aceptar(this, responsable, fechaHora);
     }
@@ -115,10 +115,6 @@ public class Documentacion {
 
     // ---- Consultas: también se delegan en el estado ----
 
-    public boolean esEnBolsinEnviado() {
-        return estadoActual.esEnBolsinEnviado();
-    }
-
     public boolean esNoRecibida() {
         return estadoActual.esNoRecibida();
     }
@@ -127,10 +123,15 @@ public class Documentacion {
         return estadoActual.esRecibidaYRechazada();
     }
 
-    // ---- Usados por los estados concretos al hacer la transición ----
+    // ---- Usados por los estados concretos al hacer el cambio de estado ----
 
     public CambioEstadoDocumentacion obtenerCambioEstadoActual() {
-        return cambiosEstado.stream().filter(CambioEstadoDocumentacion::sosActual).findFirst().orElse(null);
+        for (CambioEstadoDocumentacion cambioEstado : cambiosEstado) {
+            if (cambioEstado.sosActual()) {
+                return cambioEstado;
+            }
+        }
+        return null;
     }
 
     public void agregarCambioEstado(CambioEstadoDocumentacion cambioEstado) {
