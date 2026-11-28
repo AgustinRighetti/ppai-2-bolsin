@@ -12,6 +12,9 @@ public class EnBolsinSaliente extends EstadoDocumentacion {
 
     public static final String NOMBRE = "EnBolsinSaliente";
 
+    public EnBolsinSaliente() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

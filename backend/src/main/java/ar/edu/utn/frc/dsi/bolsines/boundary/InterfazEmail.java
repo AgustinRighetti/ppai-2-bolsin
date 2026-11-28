@@ -13,7 +13,7 @@ public class InterfazEmail {
 
     private static final Logger log = LoggerFactory.getLogger(InterfazEmail.class);
 
-    public void enviarEmail(String destinatario, String asunto, String cuerpo) {
+    public void enviarCorreo(String destinatario, String asunto, String cuerpo) {
         log.info("\n--- E-MAIL ENVIADO ---\nPara: {}\nAsunto: {}\n{}\n----------------------", destinatario, asunto, cuerpo);
     }
 }

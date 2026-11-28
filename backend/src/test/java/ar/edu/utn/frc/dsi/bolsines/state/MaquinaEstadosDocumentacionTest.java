@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Pruebas de la máquina de estados de Documentación implementada con el patrón State. */
 class MaquinaEstadosDocumentacionTest {
@@ -55,11 +54,11 @@ class MaquinaEstadosDocumentacionTest {
     @Test
     void cadaOpcionDelCU28LlevaASuEstado() {
         documentacion.noRecibir(responsable, inicio.plusHours(4));
-        assertTrue(documentacion.esNoRecibida());
+        assertInstanceOf(NoRecibida.class, documentacion.getEstadoActual());
 
         crearDocumentacionEnBolsinEnviado();
         documentacion.rechazar(responsable, inicio.plusHours(4));
-        assertTrue(documentacion.esRecibidaYRechazada());
+        assertInstanceOf(RecibidaYRechazada.class, documentacion.getEstadoActual());
 
         crearDocumentacionEnBolsinEnviado();
         documentacion.redirigir(responsable, inicio.plusHours(4));

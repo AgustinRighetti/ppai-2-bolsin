@@ -64,11 +64,11 @@ public class PantallaRegistrarRecepcion {
     @PostMapping("/confirmar")
     public ResponseEntity<ResultadoRecepcionResponse> tomarConfirmacion(@RequestBody ConfirmacionRequest request) {
         ResultadoRecepcionResponse resultado = gestor.tomarConfirmacion(request.confirma());
-        return informarEjecucion(resultado);
+        return informarRegistroExitoso(resultado);
     }
 
     /** Paso 12: informa al EB el resultado del registro (la interfaz React lo muestra). */
-    private ResponseEntity<ResultadoRecepcionResponse> informarEjecucion(ResultadoRecepcionResponse resultado) {
+    private ResponseEntity<ResultadoRecepcionResponse> informarRegistroExitoso(ResultadoRecepcionResponse resultado) {
         return ResponseEntity.ok(resultado);
     }
 

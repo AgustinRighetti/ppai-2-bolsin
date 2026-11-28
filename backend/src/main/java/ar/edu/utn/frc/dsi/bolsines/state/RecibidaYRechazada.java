@@ -12,6 +12,9 @@ public class RecibidaYRechazada extends EstadoDocumentacion {
 
     public static final String NOMBRE = "RecibidaYRechazada";
 
+    public RecibidaYRechazada() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;
@@ -20,11 +23,6 @@ public class RecibidaYRechazada extends EstadoDocumentacion {
     @Override
     public String getDescripcion() {
         return "Recibida y rechazada";
-    }
-
-    @Override
-    public boolean esRecibidaYRechazada() {
-        return true;
     }
 
     /** CU 31: Recibida y rechazada -> Registrada (se reenvía a la CM correcta). */

@@ -5,6 +5,9 @@ public class DeBaja extends EstadoDocumentacion {
 
     public static final String NOMBRE = "DeBaja";
 
+    public DeBaja() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

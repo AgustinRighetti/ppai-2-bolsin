@@ -114,16 +114,6 @@ public class Documentacion {
         estadoActual.darDeBaja(this, cambiosEstado, responsable, fechaHora);
     }
 
-    // ---- Consultas: también se delegan en el estado ----
-
-    public boolean esNoRecibida() {
-        return estadoActual.esNoRecibida();
-    }
-
-    public boolean esRecibidaYRechazada() {
-        return estadoActual.esRecibidaYRechazada();
-    }
-
     // ---- Usados por los estados concretos al hacer el cambio de estado ----
 
     public void agregarCambioEstado(CambioEstadoDocumentacion cambioEstado) {

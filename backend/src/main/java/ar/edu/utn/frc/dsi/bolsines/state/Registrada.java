@@ -12,6 +12,9 @@ public class Registrada extends EstadoDocumentacion {
 
     public static final String NOMBRE = "Registrada";
 
+    public Registrada() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

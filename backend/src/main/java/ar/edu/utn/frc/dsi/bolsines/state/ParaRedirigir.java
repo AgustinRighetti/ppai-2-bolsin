@@ -12,6 +12,9 @@ public class ParaRedirigir extends EstadoDocumentacion {
 
     public static final String NOMBRE = "ParaRedirigir";
 
+    public ParaRedirigir() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

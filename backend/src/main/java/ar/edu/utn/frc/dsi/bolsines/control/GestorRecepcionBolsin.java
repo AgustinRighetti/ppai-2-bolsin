@@ -65,6 +65,9 @@ public class GestorRecepcionBolsin {
     private List<Integer> documentacionSeleccionada = new ArrayList<>();
     private String areaDestino;
     private LocalDateTime fechaHoraActual;
+    private Estado estadoRecibidoEnCMDestino;
+    private Estado estadoRecibidoYAceptado;
+    private Estado estadoRecibidoYAceptadoParcial;
 
     public GestorRecepcionBolsin(SesionRepository sesionRepository, BolsinRepository bolsinRepository,
                                  EstadoRepository estadoRepository, InterfazEmail interfazEmail) {
@@ -255,8 +258,10 @@ public class GestorRecepcionBolsin {
     // ------------------------------------------------------------------ Pasos 10 a 12
 
     // DEFENSA (2. Recorrido): el EB confirma. Recién acá se guarda algo; los pasos anteriores solo
-    // consultan y recuerdan. Si no confirma (A6) se descarta la opción. Si confirma:
-    // fecha/hora -> estados -> actualizarEstados (bolsín + remitos) -> save -> mail -> finCU.
+    // consultan y recuerdan. Si no confirma (A6) se descarta la opción. Si confirma, se siguen los
+    // mismos pasos que en la realización de análisis: buscarEstado -> actualizarEstadoBolsin ->
+    // actualizarEstadoRemito -> actualizarEstadoDocumentacion (acá empieza el State) ->
+    // enviarNotificacion -> finCU. La pantalla después informa el registro exitoso.
     @Transactional
     public ResultadoRecepcionResponse tomarConfirmacion(boolean confirma) {
         Bolsin bolsin = obtenerBolsinSeleccionado();
@@ -274,10 +279,12 @@ public class GestorRecepcionBolsin {
         }
 
         obtenerFechaYHora();
-        List<Estado> estados = buscarEstados();
-        actualizarEstados(bolsin, estados);
+        buscarEstado();
+        actualizarEstadoBolsin(bolsin);
+        actualizarEstadoRemito(bolsin);
+        actualizarEstadoDocumentacion(bolsin);
         bolsinRepository.save(bolsin);
-        List<NotificacionResponse> notificaciones = notificarRecepcionBolsin(bolsin);
+        List<NotificacionResponse> notificaciones = enviarNotificacion(bolsin);
 
         ResultadoRecepcionResponse resultado = new ResultadoRecepcionResponse(true,
                 "La recepción del bolsín N° " + bolsin.getNumeroBolsin() + " se registró con éxito.",
@@ -291,74 +298,89 @@ public class GestorRecepcionBolsin {
         this.fechaHoraActual = LocalDateTime.now();
     }
 
-    private List<Estado> buscarEstados() {
-        return estadoRepository.findAll();
+    /**
+     * Busca, entre los estados parametrizados, los que se van a asignar: Recibido en CM destino
+     * (ámbito Bolsín), Recibido y Aceptado y Recibido y Aceptado Parcial (ámbito Remito).
+     */
+    private void buscarEstado() {
+        this.estadoRecibidoEnCMDestino = null;
+        this.estadoRecibidoYAceptado = null;
+        this.estadoRecibidoYAceptadoParcial = null;
+        for (Estado estado : estadoRepository.findAll()) {
+            if (estado.esAmbitoBolsin() && estado.esRecibidoEnCMDestino()) {
+                this.estadoRecibidoEnCMDestino = estado;
+            }
+            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptado()) {
+                this.estadoRecibidoYAceptado = estado;
+            }
+            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptadoParcial()) {
+                this.estadoRecibidoYAceptadoParcial = estado;
+            }
+        }
+        if (estadoRecibidoEnCMDestino == null || estadoRecibidoYAceptado == null
+                || estadoRecibidoYAceptadoParcial == null) {
+            throw new IllegalStateException("No se encuentran parametrizados los estados de recepción.");
+        }
+    }
+
+    /** El bolsín pasa a Recibido en CM destino (Bolsín no usa el patrón State). */
+    private void actualizarEstadoBolsin(Bolsin bolsin) {
+        bolsin.actualizarEstado(estadoRecibidoEnCMDestino, empleadoLogueado, fechaHoraActual);
     }
 
     /**
-     * El bolsín pasa a Recibido en CM destino y cada remito registra la recepción de su
-     * documentación según la opción elegida. Los cambios de estado de la documentación los hacen
-     * los estados concretos (patrón State).
+     * Cada remito pasa a Recibido y Aceptado, salvo que contenga documentación marcada como no
+     * recibida (opción 2) o que no corresponde al destino (opción 3): en ese caso queda
+     * Recibido y Aceptado Parcial.
      */
-    // DEFENSA (2. Recorrido): 1) busca los estados de Bolsín y Remito (preguntándole a cada Estado su
-    // ámbito y nombre); 2) el bolsín pasa a "Recibido en CM destino" (SIN State); 3) a cada remito le
-    // pide registrar la recepción según la opción elegida -> ahí empieza el State.
-    private void actualizarEstados(Bolsin bolsin, List<Estado> estados) {
-        Estado recibidoEnCMDestino = buscarEstadoRecibidoEnCMDestino(estados);
-        Estado recibidoYAceptado = buscarEstadoRecibidoYAceptado(estados);
-        Estado recibidoYAceptadoParcial = buscarEstadoRecibidoYAceptadoParcial(estados);
-
-        bolsin.recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual);
+    // DEFENSA (2. Recorrido): loop "Actualizar estado de cada remito [mientras haya remitos en el bolsín]".
+    private void actualizarEstadoRemito(Bolsin bolsin) {
         for (Remito remito : bolsin.getRemitos()) {
-            switch (opcionSeleccionada) {
-                case OPCION_CONTENIDO_IGUAL ->
-                        remito.registrarRecepcionCompleta(recibidoYAceptado, empleadoLogueado, fechaHoraActual);
-                case OPCION_NO_SE_RECIBE_TODA ->
-                        remito.registrarDocumentacionNoRecibida(documentacionSeleccionada, recibidoYAceptado,
-                                recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
-                case OPCION_NO_CORRESPONDE_AL_DESTINO ->
-                        remito.registrarDocumentacionRechazada(documentacionSeleccionada, recibidoYAceptado,
-                                recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
-                case OPCION_REDIRIGIR_A_OTRA_AREA ->
-                        remito.registrarDocumentacionARedirigir(documentacionSeleccionada, areaDestino,
-                                recibidoYAceptado, recibidoYAceptadoParcial, empleadoLogueado, fechaHoraActual);
-                default -> throw new IllegalStateException("Opción de recepción desconocida: " + opcionSeleccionada);
+            if (esRecepcionParcial(remito)) {
+                remito.actualizarEstado(estadoRecibidoYAceptadoParcial);
+            } else {
+                remito.actualizarEstado(estadoRecibidoYAceptado);
             }
         }
     }
 
-    private Estado buscarEstadoRecibidoEnCMDestino(List<Estado> estados) {
-        for (Estado estado : estados) {
-            if (estado.esAmbitoBolsin() && estado.esRecibidoEnCMDestino()) {
-                return estado;
-            }
-        }
-        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido en CM destino.");
+    private boolean esRecepcionParcial(Remito remito) {
+        boolean opcionParcial = opcionSeleccionada == OPCION_NO_SE_RECIBE_TODA
+                || opcionSeleccionada == OPCION_NO_CORRESPONDE_AL_DESTINO;
+        return opcionParcial && remito.contieneAlgunaDocumentacion(documentacionSeleccionada);
     }
 
-    private Estado buscarEstadoRecibidoYAceptado(List<Estado> estados) {
-        for (Estado estado : estados) {
-            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptado()) {
-                return estado;
+    /**
+     * Acá empieza el patrón State: a cada documentación se le envía el evento que corresponde a la
+     * opción elegida (aceptar, noRecibir, rechazar o redirigir). El gestor no sabe a qué estado pasa:
+     * lo resuelve el estado actual de la documentación.
+     */
+    // DEFENSA (3. Dónde aparece el patrón): loop "Actualizar estado de cada documentación
+    // [mientras haya documentación en el remito]". El gestor manda el EVENTO; el estado concreto
+    // (EnBolsinEnviado) es el que crea el estado siguiente y cambia el estado de la documentación.
+    private void actualizarEstadoDocumentacion(Bolsin bolsin) {
+        for (Remito remito : bolsin.getRemitos()) {
+            for (DetalleRemito detalle : remito.getDetalleRemito()) {
+                Documentacion documentacion = detalle.getDocumentacion();
+                if (!detalle.esDeAlgunaDocumentacion(documentacionSeleccionada)) {
+                    documentacion.aceptar(empleadoLogueado, fechaHoraActual);
+                } else if (opcionSeleccionada == OPCION_NO_SE_RECIBE_TODA) {
+                    documentacion.noRecibir(empleadoLogueado, fechaHoraActual);
+                } else if (opcionSeleccionada == OPCION_NO_CORRESPONDE_AL_DESTINO) {
+                    documentacion.rechazar(empleadoLogueado, fechaHoraActual);
+                } else if (opcionSeleccionada == OPCION_REDIRIGIR_A_OTRA_AREA) {
+                    documentacion.redirigir(empleadoLogueado, fechaHoraActual);
+                    detalle.setAreaCMCDestino(areaDestino);
+                }
             }
         }
-        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido y Aceptado.");
-    }
-
-    private Estado buscarEstadoRecibidoYAceptadoParcial(List<Estado> estados) {
-        for (Estado estado : estados) {
-            if (estado.esAmbitoRemito() && estado.esRecibidoYAceptadoParcial()) {
-                return estado;
-            }
-        }
-        throw new IllegalStateException("No se encuentra parametrizado el estado Recibido y Aceptado Parcial.");
     }
 
     /**
      * Inclusión del CU 29 Notificar recepción de bolsín: un e-mail por cada CM de origen
      * que envió documentación, con la situación de cada documentación recibida.
      */
-    private List<NotificacionResponse> notificarRecepcionBolsin(Bolsin bolsin) {
+    private List<NotificacionResponse> enviarNotificacion(Bolsin bolsin) {
         Map<ComisionMedica, List<String>> situacionPorCMOrigen = new LinkedHashMap<>();
         for (Remito remito : bolsin.getRemitos()) {
             for (DetalleRemito detalle : remito.getDetalleRemito()) {
@@ -379,9 +401,10 @@ public class GestorRecepcionBolsin {
                     + ") fue recibido el " + fechaHoraActual.format(FORMATO_FECHA_HORA) + " por "
                     + empleadoLogueado.getNombreCompleto() + ".\nSituación de la documentación enviada:\n"
                     + String.join("\n", entrada.getValue());
-            interfazEmail.enviarEmail(entrada.getKey().getEmail(), asunto, cuerpo);
+            String correo = entrada.getKey().getCorreo();
+            interfazEmail.enviarCorreo(correo, asunto, cuerpo);
             notificaciones.add(new NotificacionResponse(
-                    entrada.getKey().getNombre() + " <" + entrada.getKey().getEmail() + ">", asunto, cuerpo));
+                    entrada.getKey().getNombre() + " <" + correo + ">", asunto, cuerpo));
         }
         return notificaciones;
     }

@@ -12,6 +12,9 @@ public class NoRecibida extends EstadoDocumentacion {
 
     public static final String NOMBRE = "NoRecibida";
 
+    public NoRecibida() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;
@@ -20,11 +23,6 @@ public class NoRecibida extends EstadoDocumentacion {
     @Override
     public String getDescripcion() {
         return "No recibida";
-    }
-
-    @Override
-    public boolean esNoRecibida() {
-        return true;
     }
 
     /** CU 29: No recibida -> Registrada (puede vincularse a un nuevo remito). */

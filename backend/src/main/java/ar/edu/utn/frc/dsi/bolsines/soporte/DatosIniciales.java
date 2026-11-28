@@ -233,9 +233,9 @@ public class DatosIniciales implements CommandLineRunner {
         LocalDateTime creado = LocalDateTime.now().minusDays(4).withNano(0);
         Bolsin bolsin = new Bolsin(numero, creado.toLocalDate(), peso, precinto, origen, destino);
         bolsin.crearCambioEstado(estado(Estado.AMBITO_BOLSIN, Estado.CREADO), responsable, creado);
-        bolsin.recibir(estado(Estado.AMBITO_BOLSIN, Estado.CERRADO), responsable, creado.plusHours(3));
+        bolsin.actualizarEstado(estado(Estado.AMBITO_BOLSIN, Estado.CERRADO), responsable, creado.plusHours(3));
         if (Estado.ENVIADO.equals(estadoActual)) {
-            bolsin.recibir(estado(Estado.AMBITO_BOLSIN, Estado.ENVIADO), responsable, creado.plusDays(1));
+            bolsin.actualizarEstado(estado(Estado.AMBITO_BOLSIN, Estado.ENVIADO), responsable, creado.plusDays(1));
         }
         return bolsin;
     }

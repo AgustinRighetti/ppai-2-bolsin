@@ -62,7 +62,7 @@ public class ComisionMedica {
         return direccion;
     }
 
-    public String getEmail() {
+    public String getCorreo() {
         return email;
     }
 

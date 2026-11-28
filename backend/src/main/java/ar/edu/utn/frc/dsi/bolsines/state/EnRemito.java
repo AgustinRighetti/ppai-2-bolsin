@@ -12,6 +12,9 @@ public class EnRemito extends EstadoDocumentacion {
 
     public static final String NOMBRE = "EnRemito";
 
+    public EnRemito() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

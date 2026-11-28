@@ -5,6 +5,9 @@ public class RecibidaYAceptada extends EstadoDocumentacion {
 
     public static final String NOMBRE = "RecibidaYAceptada";
 
+    public RecibidaYAceptada() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;

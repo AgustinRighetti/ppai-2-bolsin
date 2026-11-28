@@ -92,16 +92,6 @@ public abstract class EstadoDocumentacion {
         throw transicionInvalida("dar de baja");
     }
 
-    // ---- Consultas: el estado concreto que corresponde responde verdadero ----
-
-    public boolean esNoRecibida() {
-        return false;
-    }
-
-    public boolean esRecibidaYRechazada() {
-        return false;
-    }
-
     // ---- Usados por los estados concretos al hacer el cambio de estado ----
 
     /** Recorre los cambios de estado de la documentación y devuelve el vigente (sin fecha/hora fin). */

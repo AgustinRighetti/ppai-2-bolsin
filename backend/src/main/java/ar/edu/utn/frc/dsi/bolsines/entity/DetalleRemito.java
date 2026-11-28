@@ -6,7 +6,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -41,26 +40,8 @@ public class DetalleRemito {
         return false;
     }
 
-    public void aceptarDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
-        documentacion.aceptar(responsable, fechaHora);
-    }
-
-    public void noRecibirDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
-        documentacion.noRecibir(responsable, fechaHora);
-    }
-
-    public void rechazarDocumentacion(Empleado responsable, LocalDateTime fechaHora) {
-        documentacion.rechazar(responsable, fechaHora);
-    }
-
-    public void redirigirDocumentacion(String areaCMCDestino, Empleado responsable, LocalDateTime fechaHora) {
-        documentacion.redirigir(responsable, fechaHora);
+    public void setAreaCMCDestino(String areaCMCDestino) {
         this.areaCMCDestino = areaCMCDestino;
-    }
-
-    /** Verdadero si la documentación quedó No recibida o Recibida y rechazada. */
-    public boolean esDocumentacionFaltanteORechazada() {
-        return documentacion.esNoRecibida() || documentacion.esRecibidaYRechazada();
     }
 
     public String getAreaCMCDestino() {

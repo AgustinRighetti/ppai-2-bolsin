@@ -90,15 +90,15 @@ public class Bolsin {
     }
 
     /**
-     * Registra la recepción del bolsín en la CM destino: cierra el cambio de estado
-     * vigente y crea el nuevo con el empleado responsable.
+     * Cambia el estado del bolsín: cierra el cambio de estado vigente y crea el nuevo con el
+     * empleado responsable. Bolsín no usa el patrón State.
      */
-    public void recibir(Estado estadoRecibido, Empleado responsable, LocalDateTime fechaHora) {
+    public void actualizarEstado(Estado nuevoEstado, Empleado responsable, LocalDateTime fechaHora) {
         CambioEstadoBolsin actual = obtenerCambioEstadoActual();
         if (actual != null) {
             actual.setFechaHoraFin(fechaHora);
         }
-        crearCambioEstado(estadoRecibido, responsable, fechaHora);
+        crearCambioEstado(nuevoEstado, responsable, fechaHora);
     }
 
     public void crearCambioEstado(Estado estado, Empleado responsable, LocalDateTime fechaHora) {
@@ -106,7 +106,12 @@ public class Bolsin {
     }
 
     private CambioEstadoBolsin obtenerCambioEstadoActual() {
-        return cambiosEstado.stream().filter(CambioEstadoBolsin::sosActual).findFirst().orElse(null);
+        for (CambioEstadoBolsin cambioEstado : cambiosEstado) {
+            if (cambioEstado.sosActual()) {
+                return cambioEstado;
+            }
+        }
+        return null;
     }
 
     public String getNombreEstadoActual() {

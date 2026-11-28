@@ -15,6 +15,9 @@ public class EnBolsinEnviado extends EstadoDocumentacion {
 
     public static final String NOMBRE = "EnBolsinEnviado";
 
+    public EnBolsinEnviado() {
+    }
+
     @Override
     public String getNombre() {
         return NOMBRE;
