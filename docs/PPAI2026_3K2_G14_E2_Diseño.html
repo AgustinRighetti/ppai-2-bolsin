@@ -613,26 +613,26 @@ sequenceDiagram
   G->>G: buscarEstados()
   G->>G: actualizarEstados(bolsin, estados)
   G->>G: buscarEstadoRecibidoEnCMDestino(estados)
-  loop mientras haya estados
+  loop Buscar estado Recibido en CM destino | mientras haya estados
     G->>E: esAmbitoBolsin()
     G->>E: esRecibidoEnCMDestino()
   end
   G->>G: buscarEstadoRecibidoYAceptado(estados)
-  loop mientras haya estados
+  loop Buscar estado Recibido y aceptado | mientras haya estados
     G->>E: esAmbitoRemito()
     G->>E: esRecibidoYAceptado()
   end
   G->>G: buscarEstadoRecibidoYAceptadoParcial(estados)
-  loop mientras haya estados
+  loop Buscar estado Recibido y aceptado parcial | mientras haya estados
     G->>E: esAmbitoRemito()
     G->>E: esRecibidoYAceptadoParcial()
   end
   G->>B: recibir(recibidoEnCMDestino, empleadoLogueado, fechaHoraActual)
-  loop mientras haya remitos en el bolsín
+  loop Registrar recepción de cada remito | mientras haya remitos en el bolsín
     Note over G,R: opcionSeleccionada = OPCION_CONTENIDO_IGUAL (flujo descripto)
     G->>R: registrarRecepcionCompleta(recibidoYAceptado, empleadoLogueado, fechaHoraActual)
     activate R
-    loop mientras haya detalles en el remito
+    loop Aceptar la documentación de cada detalle | mientras haya detalles en el remito
       R->>DR: aceptarDocumentacion(responsable, fechaHora)
       activate DR
       DR->>D: aceptar(responsable, fechaHora)
@@ -640,7 +640,7 @@ sequenceDiagram
       D->>EE: aceptar(this, cambiosEstado, responsable, fechaHora)
       activate EE
       EE->>EE: buscarCambioEstadoActual(cambiosEstado)
-      loop mientras haya cambios de estado
+      loop Buscar el cambio de estado actual | mientras haya cambios de estado
         EE->>CA: sosActual()
       end
       EE->>CA: setFechaHoraFin(fechaHora)
@@ -660,7 +660,7 @@ sequenceDiagram
     deactivate R
   end
   G->>G: notificarRecepcionBolsin(bolsin)
-  loop mientras haya CM de origen a notificar
+  loop Notificar a cada CM de origen | mientras haya CM de origen a notificar
     G->>IE: enviarEmail(destinatario, asunto, cuerpo)
   end
   G->>G: buscarRemitos(bolsin)
@@ -760,10 +760,22 @@ sequenceDiagram
 </div>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: false, theme: 'neutral', themeVariables: { fontSize: '15px', actorBorder: '#333333', actorBkg: '#ffffff', actorTextColor: '#111111', actorLineColor: '#888888', noteBkgColor: '#fff7cc', noteTextColor: '#222222', noteBorderColor: '#c9a227', signalColor: '#222222', signalTextColor: '#111111' }, sequence: { useMaxWidth: true, actorMargin: 18, width: 118, messageMargin: 26, boxMargin: 6, mirrorActors: false }, class: { useMaxWidth: true } });
+  mermaid.initialize({ startOnLoad: false, theme: 'neutral', themeVariables: { fontSize: '15px', actorBorder: '#333333', actorBkg: '#ffffff', actorTextColor: '#111111', actorLineColor: '#888888', noteBkgColor: '#fff7cc', noteTextColor: '#222222', noteBorderColor: '#c9a227', signalColor: '#222222', signalTextColor: '#111111' }, themeCSS: 'text.actor, text.actor tspan { text-decoration: underline !important; fill: #111 !important; } .loopLine { stroke: #222 !important; stroke-width: 1.6px !important; stroke-dasharray: none !important; } .labelBox { fill: #dde4f0 !important; stroke: #222 !important; stroke-width: 1.4px !important; } .labelText, .loopText, .loopText tspan { fill: #111 !important; font-weight: 700 !important; }', sequence: { useMaxWidth: true, actorMargin: 18, width: 118, messageMargin: 26, boxMargin: 6, mirrorActors: false }, class: { useMaxWidth: true } });
   // Se dibuja un diagrama por vez para que no se superpongan al exportar a PDF.
   for (const nodo of document.querySelectorAll('.mermaid')) {
     await mermaid.run({ nodes: [nodo] });
+    // Loops: el texto se escribe "propósito | condición" y se muestra como "propósito [condición]".
+    // Mermaid puede partir el texto en varias líneas (tspan), por eso se recorre cada parte.
+    const grupos = new Set([...nodo.querySelectorAll('.loopText')].map(t => t.parentNode));
+    for (const grupo of grupos) {
+      const partes = [...grupo.querySelectorAll('.loopText')].flatMap(t => {
+        const ts = [...t.querySelectorAll('tspan')];
+        return ts.length ? ts : [t];
+      });
+      if (!partes.some(t => t.textContent.includes(' | '))) continue;
+      partes[0].textContent = partes[0].textContent.replace(/^\[/, '');
+      for (const t of partes) t.textContent = t.textContent.replace(' | ', ' [');
+    }
     // El SVG se reemplaza por una imagen vectorial: así cada diagrama se imprime en su propia hoja.
     const svg = nodo.querySelector('svg');
     if (svg) {
